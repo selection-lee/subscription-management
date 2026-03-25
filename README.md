@@ -14,13 +14,12 @@ Full-Stack TypeScript Monorepo — pnpm workspace 기반으로 프론트엔드(R
 
 ```
 apps/
-  api/          # Express 5 + tRPC 백엔드 서버
-  admin/        # Admin 대시보드 (React + Vite)
-  tasker/       # Tasker 앱 (React + Vite)
+  app/          # 프론트엔드 (React + Vite)
+  api/          # Express 5 + tRPC 진입점
 
 packages/
   schema/       # Prisma Client, Zod 스키마, 공유 타입
-  server/       # 백엔드 유틸 (tRPC, 로깅, AWS, 이메일)
+  server/       # tRPC 라우터, 비즈니스 로직, 백엔드 유틸
   shared/       # 공유 비즈니스 로직
   ui/           # 공용 UI 컴포넌트 라이브러리
 ```
@@ -67,7 +66,6 @@ catalog:
 | Radix UI          | -    | Headless UI 컴포넌트                        |
 | tailwind-variants | 1.x  | 컴포넌트 variant 스타일링                   |
 | Lucide React      | -    | 아이콘                                      |
-| Tiptap            | 2.x  | 리치 텍스트 에디터 (UI 패키지)              |
 | vite-plugin-pwa   | -    | PWA 지원 (Service Worker, Web App Manifest) |
 
 ## 백엔드
@@ -78,7 +76,6 @@ catalog:
 | tRPC Server | 11.4 | 타입 안전 API 프로시저          |
 | Passport    | 0.7  | 인증 (Google OAuth)             |
 | JWT         | -    | 토큰 기반 인증                  |
-| bcryptjs    | 3.x  | 비밀번호 해싱                   |
 | SuperJSON   | 2.x  | tRPC 직렬화 (Date, Map 등 지원) |
 
 ## 데이터베이스
@@ -96,15 +93,12 @@ catalog:
 | Prisma Schema | DB 모델 정의 → 마이그레이션    |
 | Zod 4         | 런타임 유효성 검증 + 타입 추론 |
 
-## 인프라 & DevOps
+## 인프라
 
-| 기술          | 용도                   |
-| ------------- | ---------------------- |
-| Docker        | 컨테이너화             |
-| AWS S3        | 파일 스토리지          |
-| AWS KMS       | 암호화 키 관리         |
-| OpenTelemetry | 로깅 & 옵저빌리티      |
-| dotenvx       | 암호화된 환경변수 관리 |
+| 기술           | 용도                   |
+| -------------- | ---------------------- |
+| Cloudflare R2  | 파일 스토리지          |
+| dotenvx        | 암호화된 환경변수 관리 |
 
 ## 개발 도구
 
@@ -158,9 +152,8 @@ React 클라이언트 → tRPC 훅으로 자동 타입 추론
 
 ```bash
 # 개발 서버
-pnpm admin              # Admin 대시보드 (port 5174)
+pnpm app                # 프론트엔드 (port 5173)
 pnpm api                # API 서버 (port 3000)
-pnpm tasker             # Tasker 앱 (port 5173)
 
 # 빌드
 pnpm build              # 전체 패키지 빌드
@@ -175,7 +168,7 @@ pnpm --filter @lib/schema run db:reset      # DB 초기화
 pnpm reset              # clean → install → generate → build
 ```
 
-> **Note**: 위 커맨드는 다른 레포에서 가져온 것으로, 실제 스크립트는 개발 진행하면서 수정될 수 있습니다.
+> **Note**: 위 커맨드는 참고 레포 기반이며, 실제 스크립트는 개발 진행하면서 수정될 수 있습니다.
 
 ---
 
