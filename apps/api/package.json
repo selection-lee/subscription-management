@@ -1,0 +1,35 @@
+{
+  "name": "@lib/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --conditions=development --watch src/index.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/index.js",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@lib/schema": "workspace:*",
+    "@lib/server": "workspace:*",
+    "@lib/shared": "workspace:*",
+    "express": "catalog:",
+    "@trpc/server": "catalog:",
+    "superjson": "catalog:",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "@dotenvx/dotenvx": "^1.0.0"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "@types/express": "^5.0.0",
+    "@types/passport": "^1.0.0",
+    "@types/passport-google-oauth20": "^2.0.0",
+    "@types/jsonwebtoken": "^9.0.0",
+    "@types/cookie-parser": "^1.4.0",
+    "@types/cors": "^2.8.0"
+  }
+}

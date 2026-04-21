@@ -1,0 +1,88 @@
+datasource db {
+  provider = "mysql"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "./generated/prisma/client"
+}
+
+enum BillingCycle {
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+model User {
+  id    String  @id @default(uuid())
+  email String? @unique /// null이면 로컬 Only
+
+  subscriptions       Subscription[]
+  notificationSetting NotificationSetting?
+  appSetting          AppSetting?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model NotificationSetting {
+  id           String  @id @default(uuid())
+  userId       String  @unique @map("user_id")
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  enabled      Boolean @default(true) /// 전역 알림 on/off
+  defaultTime  String  @default("09:00") @map("default_time") /// 알림 시간 (HH:mm)
+  daysBefore   Int     @default(1) @map("days_before") /// 결제 며칠 전 알림 (MVP: 1일 고정)
+  onPaymentDay Boolean @default(true) @map("on_payment_day") /// 결제 당일 알림 여부
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("notification_settings")
+}
+
+model AppSetting {
+  id          String @id @default(uuid())
+  userId      String @unique @map("user_id")
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  language    String @default("ko") /// ISO 639-1
+  currency    String @default("KRW") /// 기본 통화 (MVP 고정)
+  defaultView String @default("subscription") @map("default_view") /// 첫 화면 (MVP X)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
+}
+
+model Subscription {
+  id              String       @id @default(uuid())
+  userId          String       @map("user_id")
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name            String /// 구독 서비스명
+  icon            String? /// base64/URL/이모지
+  startDate       DateTime     @map("start_date") /// 구독 시작일
+  endDate         DateTime?    @map("end_date") /// 구독 종료일 (null이면 무기한)
+  amount          Decimal /// 결제 금액
+  currency        String       @default("KRW") /// 통화 코드 (MVP: KRW)
+  billingCycle    BillingCycle @map("billing_cycle") /// 결제 주기
+  paymentMethod   String?      @map("payment_method") /// 결제 수단 (e.g., 신한카드, kb계좌)
+  memo            String?
+
+  nextPaymentDate DateTime     @map("next_payment_date") /// 다음 결제 예정일 (계산해서 저장)
+  lastPaidAt      DateTime?    @map("last_paid_at") /// 마지막 결제일
+
+  isArchived      Boolean      @default(false) @map("is_archived") /// 아카이빙 여부
+  archivedAt      DateTime?    @map("archived_at") /// 아카이브된 시각
+
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  @@index([userId, isArchived])
+  @@index([nextPaymentDate])
+  @@map("subscriptions")
+}
