@@ -24,7 +24,7 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("users")
+  @@map("user")
 }
 
 model NotificationSetting {
@@ -40,7 +40,7 @@ model NotificationSetting {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("notification_settings")
+  @@map("notification_setting")
 }
 
 model AppSetting {
@@ -55,7 +55,7 @@ model AppSetting {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  @@map("app_settings")
+  @@map("app_setting")
 }
 
 model Subscription {
@@ -84,5 +84,5 @@ model Subscription {
 
   @@index([userId, isArchived])
   @@index([nextPaymentDate])
-  @@map("subscriptions")
+  @@map("subscription")
 }
