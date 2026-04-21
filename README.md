@@ -95,10 +95,10 @@ catalog:
 
 ## 인프라
 
-| 기술           | 용도                   |
-| -------------- | ---------------------- |
-| Cloudflare R2  | 파일 스토리지          |
-| dotenvx        | 암호화된 환경변수 관리 |
+| 기술          | 용도                   |
+| ------------- | ---------------------- |
+| Cloudflare R2 | 파일 스토리지          |
+| dotenvx       | 암호화된 환경변수 관리 |
 
 ## 개발 도구
 
@@ -158,11 +158,19 @@ pnpm api                # API 서버 (port 3000)
 # 빌드
 pnpm build              # 전체 패키지 빌드
 
+# DB 컨테이너 (MySQL 8.4)
+docker compose up -d    # 백그라운드 기동
+docker compose down     # 컨테이너 정리 (볼륨 유지)
+docker compose down -v  # 컨테이너 + 볼륨 삭제 (DB 초기화)
+docker compose ps       # 상태 확인
+docker compose logs -f  # 로그 스트리밍
+
 # 데이터베이스
 pnpm --filter @lib/schema run db:generate   # Prisma 클라이언트 생성
-pnpm --filter @lib/schema run db:migrate    # 마이그레이션 생성
-pnpm --filter @lib/schema run db:deploy     # 마이그레이션 적용
-pnpm --filter @lib/schema run db:reset      # DB 초기화
+pnpm --filter @lib/schema run db:migrate    # 마이그레이션 생성 (dev)
+pnpm --filter @lib/schema run db:deploy     # 마이그레이션 적용 (prod)
+pnpm --filter @lib/schema run db:reset      # DB 초기화 + 재적용
+pnpm --filter @lib/schema run db:studio     # Prisma Studio (GUI)
 
 # 초기화
 pnpm reset              # clean → install → generate → build
