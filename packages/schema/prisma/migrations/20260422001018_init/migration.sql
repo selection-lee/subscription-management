@@ -48,17 +48,18 @@ CREATE TABLE `subscription` (
     `end_date` DATETIME(3) NULL,
     `amount` DECIMAL(65, 30) NOT NULL,
     `currency` VARCHAR(191) NOT NULL DEFAULT 'KRW',
-    `billing_cycle` ENUM('WEEKLY', 'MONTHLY', 'YEARLY') NOT NULL,
+    `cycle_unit` ENUM('WEEK', 'MONTH', 'YEAR') NOT NULL,
+    `cycle_interval` INTEGER NOT NULL DEFAULT 1,
     `payment_method` VARCHAR(191) NULL,
     `memo` VARCHAR(191) NULL,
     `next_payment_date` DATETIME(3) NOT NULL,
     `last_paid_at` DATETIME(3) NULL,
-    `is_archived` BOOLEAN NOT NULL DEFAULT false,
+    `status` ENUM('ACTIVE', 'ARCHIVED') NOT NULL DEFAULT 'ACTIVE',
     `archived_at` DATETIME(3) NULL,
     `created_at` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updated_at` DATETIME(3) NOT NULL,
 
-    INDEX `subscription_user_id_is_archived_idx`(`user_id`, `is_archived`),
+    INDEX `subscription_user_id_status_idx`(`user_id`, `status`),
     INDEX `subscription_next_payment_date_idx`(`next_payment_date`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

@@ -7,10 +7,15 @@ generator client {
   output   = "./generated/prisma/client"
 }
 
-enum BillingCycle {
-  WEEKLY
-  MONTHLY
-  YEARLY
+enum CycleUnit {
+  WEEK
+  MONTH
+  YEAR
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  ARCHIVED
 }
 
 model User {
@@ -65,24 +70,25 @@ model Subscription {
 
   name            String /// 구독 서비스명
   icon            String? /// base64/URL/이모지
-  startDate       DateTime     @map("start_date") /// 구독 시작일
-  endDate         DateTime?    @map("end_date") /// 구독 종료일 (null이면 무기한)
+  startDate       DateTime           @map("start_date") /// 구독 시작일
+  endDate         DateTime?          @map("end_date") /// 구독 종료일 (null이면 무기한)
   amount          Decimal /// 결제 금액
-  currency        String       @default("KRW") /// 통화 코드 (MVP: KRW)
-  billingCycle    BillingCycle @map("billing_cycle") /// 결제 주기
-  paymentMethod   String?      @map("payment_method") /// 결제 수단 (e.g., 신한카드, kb계좌)
+  currency        String             @default("KRW") /// 통화 코드 (MVP: KRW)
+  cycleUnit       CycleUnit          @map("cycle_unit") /// 결제 주기 단위 (WEEK/MONTH/YEAR)
+  cycleInterval   Int                @default(1) @map("cycle_interval") /// 주기 간격 (예: 2 + MONTH = 2개월마다)
+  paymentMethod   String?            @map("payment_method") /// 결제 수단 (e.g., 신한카드, kb계좌)
   memo            String?
 
-  nextPaymentDate DateTime     @map("next_payment_date") /// 다음 결제 예정일 (계산해서 저장)
-  lastPaidAt      DateTime?    @map("last_paid_at") /// 마지막 결제일
+  nextPaymentDate DateTime           @map("next_payment_date") /// 다음 결제 예정일 (계산해서 저장)
+  lastPaidAt      DateTime?          @map("last_paid_at") /// 마지막 결제일
 
-  isArchived      Boolean      @default(false) @map("is_archived") /// 아카이빙 여부
-  archivedAt      DateTime?    @map("archived_at") /// 아카이브된 시각
+  status          SubscriptionStatus @default(ACTIVE) /// 활성/아카이브 (나중에 PAUSED 확장 대비)
+  archivedAt      DateTime?          @map("archived_at") /// 아카이브된 시각
 
-  createdAt       DateTime     @default(now()) @map("created_at")
-  updatedAt       DateTime     @updatedAt @map("updated_at")
+  createdAt       DateTime           @default(now()) @map("created_at")
+  updatedAt       DateTime           @updatedAt @map("updated_at")
 
-  @@index([userId, isArchived])
+  @@index([userId, status])
   @@index([nextPaymentDate])
   @@map("subscription")
 }
