@@ -93,3 +93,23 @@ export function isInCurrentMonth(date: Date | string) {
   const now = new Date();
   return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
 }
+
+// decisions.md §0001 — 통화별 "연환산" 집계 엔진 (rate-agnostic 순수 함수).
+// 환율을 모르며, 통화별 버킷만 반환한다. 환산(C)은 이 결과를 입력으로 받는 별도 스텝.
+type CyclelikeSub = {
+  amount: unknown;
+  currency: string;
+  cycleUnit: string;
+  cycleInterval: number;
+};
+
+export function annualizedByCurrency(subs: CyclelikeSub[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const s of subs) {
+    // 주×52 / 월×12 / 년×1, 모두 ÷ cycleInterval (예: 2개월마다 → 12/2 = 6회/년)
+    const perYearBase = s.cycleUnit === "WEEK" ? 52 : s.cycleUnit === "YEAR" ? 1 : 12;
+    const paymentsPerYear = perYearBase / (s.cycleInterval || 1);
+    out[s.currency] = (out[s.currency] ?? 0) + Number(s.amount ?? 0) * paymentsPerYear;
+  }
+  return out;
+}

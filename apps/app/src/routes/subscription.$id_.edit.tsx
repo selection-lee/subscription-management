@@ -11,7 +11,7 @@ import {
   toDateInputValue,
 } from "../lib/subscription.ts";
 
-export const Route = createFileRoute("/subscription/$id/edit")({
+export const Route = createFileRoute("/subscription/$id_/edit")({
   component: EditPage,
 });
 
@@ -89,6 +89,7 @@ function EditPage() {
       initial={detailQuery.data}
       onSave={handleSave}
       isPending={updateMutation.isPending}
+      isError={updateMutation.isError}
     />
   );
 }
@@ -98,6 +99,7 @@ function EditForm({
   initial,
   onSave,
   isPending,
+  isError,
 }: {
   id: string;
   initial: {
@@ -114,6 +116,7 @@ function EditForm({
   };
   onSave: (form: FormValues) => void;
   isPending: boolean;
+  isError: boolean;
 }) {
   const navigate = useNavigate();
   const [form, setForm] = useState<FormValues>({
@@ -158,6 +161,16 @@ function EditForm({
           편집 중 · 저장하지 않으면 변경사항이 사라집니다
         </span>
       </div>
+
+      {/* save error */}
+      {isError && (
+        <div className="mx-5 mb-4 flex items-center gap-2 rounded-xl border border-[rgba(248,113,113,0.35)] bg-[rgba(248,113,113,0.1)] px-3.5 py-2.5">
+          <span className="text-sm">⚠️</span>
+          <span className="text-[12px] text-[#fca5a5]">
+            저장에 실패했습니다. 이름·아이콘·금액 등 입력값을 확인해주세요.
+          </span>
+        </div>
+      )}
 
       {/* icon + name */}
       <div className="px-5 pb-4 text-center">
@@ -213,15 +226,6 @@ function EditForm({
                 value: u,
                 label: u === "WEEK" ? "매주" : u === "MONTH" ? "매월" : "매년",
               }))}
-            />
-          </EditRow>
-          <EditRow label="주기 간격">
-            <input
-              type="number"
-              className="w-20 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-right text-sm outline-none focus:border-[#4a3aff]"
-              value={form.cycleInterval}
-              onChange={(e) => setForm({ ...form, cycleInterval: Number(e.target.value) })}
-              min={1}
             />
           </EditRow>
           <EditRow label="시작일">

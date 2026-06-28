@@ -10,16 +10,22 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsRouteImport } from './routes/terms'
+import { Route as StatsRouteImport } from './routes/stats'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ArchiveRouteImport } from './routes/archive'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SubscriptionIdRouteImport } from './routes/subscription.$id'
-import { Route as SubscriptionIdEditRouteImport } from './routes/subscription.$id.edit'
+import { Route as SubscriptionIdEditRouteImport } from './routes/subscription.$id_.edit'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StatsRoute = StatsRouteImport.update({
+  id: '/stats',
+  path: '/stats',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -48,9 +54,9 @@ const SubscriptionIdRoute = SubscriptionIdRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const SubscriptionIdEditRoute = SubscriptionIdEditRouteImport.update({
-  id: '/edit',
-  path: '/edit',
-  getParentRoute: () => SubscriptionIdRoute,
+  id: '/subscription/$id_/edit',
+  path: '/subscription/$id/edit',
+  getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -58,8 +64,9 @@ export interface FileRoutesByFullPath {
   '/archive': typeof ArchiveRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
+  '/stats': typeof StatsRoute
   '/terms': typeof TermsRoute
-  '/subscription/$id': typeof SubscriptionIdRouteWithChildren
+  '/subscription/$id': typeof SubscriptionIdRoute
   '/subscription/$id/edit': typeof SubscriptionIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -67,8 +74,9 @@ export interface FileRoutesByTo {
   '/archive': typeof ArchiveRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
+  '/stats': typeof StatsRoute
   '/terms': typeof TermsRoute
-  '/subscription/$id': typeof SubscriptionIdRouteWithChildren
+  '/subscription/$id': typeof SubscriptionIdRoute
   '/subscription/$id/edit': typeof SubscriptionIdEditRoute
 }
 export interface FileRoutesById {
@@ -77,9 +85,10 @@ export interface FileRoutesById {
   '/archive': typeof ArchiveRoute
   '/privacy': typeof PrivacyRoute
   '/settings': typeof SettingsRoute
+  '/stats': typeof StatsRoute
   '/terms': typeof TermsRoute
-  '/subscription/$id': typeof SubscriptionIdRouteWithChildren
-  '/subscription/$id/edit': typeof SubscriptionIdEditRoute
+  '/subscription/$id': typeof SubscriptionIdRoute
+  '/subscription/$id_/edit': typeof SubscriptionIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/archive'
     | '/privacy'
     | '/settings'
+    | '/stats'
     | '/terms'
     | '/subscription/$id'
     | '/subscription/$id/edit'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/archive'
     | '/privacy'
     | '/settings'
+    | '/stats'
     | '/terms'
     | '/subscription/$id'
     | '/subscription/$id/edit'
@@ -106,9 +117,10 @@ export interface FileRouteTypes {
     | '/archive'
     | '/privacy'
     | '/settings'
+    | '/stats'
     | '/terms'
     | '/subscription/$id'
-    | '/subscription/$id/edit'
+    | '/subscription/$id_/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -116,8 +128,10 @@ export interface RootRouteChildren {
   ArchiveRoute: typeof ArchiveRoute
   PrivacyRoute: typeof PrivacyRoute
   SettingsRoute: typeof SettingsRoute
+  StatsRoute: typeof StatsRoute
   TermsRoute: typeof TermsRoute
-  SubscriptionIdRoute: typeof SubscriptionIdRouteWithChildren
+  SubscriptionIdRoute: typeof SubscriptionIdRoute
+  SubscriptionIdEditRoute: typeof SubscriptionIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -127,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/terms'
       fullPath: '/terms'
       preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stats': {
+      id: '/stats'
+      path: '/stats'
+      fullPath: '/stats'
+      preLoaderRoute: typeof StatsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -164,35 +185,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SubscriptionIdRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/subscription/$id/edit': {
-      id: '/subscription/$id/edit'
-      path: '/edit'
+    '/subscription/$id_/edit': {
+      id: '/subscription/$id_/edit'
+      path: '/subscription/$id/edit'
       fullPath: '/subscription/$id/edit'
       preLoaderRoute: typeof SubscriptionIdEditRouteImport
-      parentRoute: typeof SubscriptionIdRoute
+      parentRoute: typeof rootRouteImport
     }
   }
 }
-
-interface SubscriptionIdRouteChildren {
-  SubscriptionIdEditRoute: typeof SubscriptionIdEditRoute
-}
-
-const SubscriptionIdRouteChildren: SubscriptionIdRouteChildren = {
-  SubscriptionIdEditRoute: SubscriptionIdEditRoute,
-}
-
-const SubscriptionIdRouteWithChildren = SubscriptionIdRoute._addFileChildren(
-  SubscriptionIdRouteChildren,
-)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ArchiveRoute: ArchiveRoute,
   PrivacyRoute: PrivacyRoute,
   SettingsRoute: SettingsRoute,
+  StatsRoute: StatsRoute,
   TermsRoute: TermsRoute,
-  SubscriptionIdRoute: SubscriptionIdRouteWithChildren,
+  SubscriptionIdRoute: SubscriptionIdRoute,
+  SubscriptionIdEditRoute: SubscriptionIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

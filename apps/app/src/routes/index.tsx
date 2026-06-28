@@ -77,6 +77,13 @@ function HomePage() {
           </div>
           <div className="flex items-center gap-2">
             <Link
+              to="/stats"
+              title="통계"
+              className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] border border-white/10 bg-white/[0.06] text-sm"
+            >
+              📊
+            </Link>
+            <Link
               to="/archive"
               title="아카이브"
               className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] border border-white/10 bg-white/[0.06] text-sm"
