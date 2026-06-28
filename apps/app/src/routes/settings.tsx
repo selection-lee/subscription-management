@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "../trpc.ts";
@@ -25,11 +26,20 @@ function SettingsPage() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
+  // 저장 직후 토스트 ("저장됨 ✓") — tick을 올려 매 저장마다 타이머 리셋
+  const [savedTick, setSavedTick] = useState(0);
+  useEffect(() => {
+    if (savedTick === 0) return;
+    const t = setTimeout(() => setSavedTick(0), 1500);
+    return () => clearTimeout(t);
+  }, [savedTick]);
+
   const settingsQuery = useQuery(trpc.settings.get.queryOptions());
   const updateMutation = useMutation(
     trpc.settings.update.mutationOptions({
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: trpc.settings.get.queryKey() });
+        setSavedTick((n) => n + 1);
       },
     }),
   );
@@ -49,9 +59,7 @@ function SettingsPage() {
           ‹
         </Link>
         <span className="text-[15px] font-medium tracking-tight">설정</span>
-        <span className="text-[11px] text-white/30">
-          {updateMutation.isPending ? "저장 중..." : ""}
-        </span>
+        <div className="w-8" />
       </div>
 
       {/* 계정 (로컬 전용 — 로그인 Phase 2) */}
@@ -97,6 +105,17 @@ function SettingsPage() {
       <p className="px-5 pb-10 pt-2 text-center text-[11px] text-white/20">
         구독 관리 · v0.1.0
       </p>
+
+      {/* 저장 완료 토스트 — 헤더 바로 아래(상단)에 고정해 어떤 뷰포트에서도 보이게 */}
+      <div
+        className={`pointer-events-none fixed inset-x-0 top-16 z-50 flex justify-center transition-all duration-200 ${
+          savedTick > 0 ? "translate-y-0 opacity-100" : "-translate-y-2 opacity-0"
+        }`}
+      >
+        <div className="rounded-full border border-[rgba(74,58,255,0.4)] bg-[#1e1e2e]/95 px-4 py-2 text-[13px] font-medium text-white/85 shadow-[0_8px_24px_rgba(0,0,0,0.5)] backdrop-blur">
+          저장됨 ✓
+        </div>
+      </div>
     </Shell>
   );
 }
