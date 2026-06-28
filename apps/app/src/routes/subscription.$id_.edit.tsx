@@ -1,7 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "../trpc.ts";
-import { toDateInputValue, type Currency, type CycleUnit } from "../lib/subscription.ts";
+import {
+  toDateInputValue,
+  presetIndexForId,
+  type Currency,
+  type CycleUnit,
+} from "../lib/subscription.ts";
 import { SubscriptionForm } from "../components/SubscriptionForm.tsx";
 
 export const Route = createFileRoute("/subscription/$id_/edit")({
@@ -47,10 +52,11 @@ function EditPage() {
     <SubscriptionForm
       title="편집"
       submitLabel="수정완료"
-      gradientSeed={id}
       initial={{
         name: d.name,
         icon: d.icon ?? "✨",
+        colorPreset: d.colorPreset ?? presetIndexForId(d.id),
+        iconColor: d.iconColor ?? null,
         amount: Number(d.amount ?? 0),
         currency: d.currency as Currency,
         cycleUnit: d.cycleUnit as CycleUnit,
@@ -65,6 +71,8 @@ function EditPage() {
           id,
           name: v.name,
           icon: v.icon,
+          colorPreset: v.colorPreset,
+          iconColor: v.iconColor,
           amount: v.amount,
           currency: v.currency,
           cycleUnit: v.cycleUnit,

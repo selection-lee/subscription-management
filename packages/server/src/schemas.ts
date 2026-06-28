@@ -11,6 +11,12 @@ const dateString = z.string().refine((value) => !Number.isNaN(Date.parse(value))
 export const createSubscriptionInput = z.object({
   name: z.string().min(1).max(80),
   icon: z.string().min(1).max(4),
+  colorPreset: z.number().int().min(0).max(5).optional(),
+  iconColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, "#rrggbb 형식이어야 합니다")
+    .nullable()
+    .optional(),
   amount: z.number().nonnegative(),
   currency: currencyEnum.default("KRW"),
   cycleUnit: billingCycleUnitEnum,
@@ -27,6 +33,12 @@ export const updateSubscriptionInput = z
     id: z.string(),
     name: z.string().min(1).max(80).optional(),
     icon: z.string().min(1).max(4).optional(),
+    colorPreset: z.number().int().min(0).max(5).optional(),
+    iconColor: z
+      .string()
+      .regex(/^#[0-9a-fA-F]{6}$/, "#rrggbb 형식이어야 합니다")
+      .nullable()
+      .optional(),
     amount: z.number().nonnegative().optional(),
     currency: currencyEnum.optional(),
     cycleUnit: billingCycleUnitEnum.optional(),

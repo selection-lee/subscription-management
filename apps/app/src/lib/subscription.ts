@@ -11,8 +11,8 @@ export const sortLabels: Record<SortKey, string> = {
   amount: "금액순",
 };
 
-// 스펙 §5.9 — 아이콘 그라디언트 6종 (colorPreset 미저장이므로 id 해시로 선택)
-const gradients = [
+// 스펙 §5.9 — 아이콘 그라디언트 6종 (colorPreset). 미저장(null)이면 id 해시로 선택.
+export const gradients = [
   "linear-gradient(135deg,#1a1a6e,#4a3aff)",
   "linear-gradient(135deg,#0d4f3c,#1d9e75)",
   "linear-gradient(135deg,#6b0f1a,#d85a30)",
@@ -21,10 +21,37 @@ const gradients = [
   "linear-gradient(135deg,#2c2c2c,#5f5e5a)",
 ];
 
-export function gradientFor(id: string) {
+export function presetIndexForId(id: string) {
   let h = 0;
   for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  return gradients[h % gradients.length];
+  return h % gradients.length;
+}
+
+export function gradientFor(id: string) {
+  return gradients[presetIndexForId(id)];
+}
+
+function darkenHex(hex: string, factor: number) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.round(((n >> 16) & 255) * factor);
+  const g = Math.round(((n >> 8) & 255) * factor);
+  const b = Math.round((n & 255) * factor);
+  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+}
+
+// 커스텀 색(hex) → 프리셋과 톤 맞춘 그라디언트
+export function gradientFromHex(hex: string) {
+  return `linear-gradient(135deg, ${hex}, ${darkenHex(hex, 0.62)})`;
+}
+
+// 우선순위: 커스텀 색(iconColor) > 프리셋(colorPreset) > id 해시
+export function gradientForSubscription(s: {
+  id: string;
+  colorPreset?: number | null;
+  iconColor?: string | null;
+}) {
+  if (s.iconColor) return gradientFromHex(s.iconColor);
+  return s.colorPreset != null ? gradients[s.colorPreset] : gradients[presetIndexForId(s.id)];
 }
 
 export function toDateInputValue(value: Date | string) {

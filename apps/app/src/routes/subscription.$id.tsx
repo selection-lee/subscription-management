@@ -3,7 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "../trpc.ts";
 import {
-  gradientFor,
+  gradientForSubscription,
   daysUntil,
   cycleEvery,
   formatAmount,
@@ -139,7 +139,7 @@ function DetailPage() {
       <div className="px-5 pb-5 pt-2 text-center">
         <div
           className="mx-auto mb-3 flex h-[68px] w-[68px] items-center justify-center rounded-[18px] text-3xl shadow-[0_4px_20px_rgba(74,58,255,0.4)]"
-          style={{ background: gradientFor(s.id) }}
+          style={{ background: gradientForSubscription(s) }}
         >
           {s.icon ?? "✨"}
         </div>

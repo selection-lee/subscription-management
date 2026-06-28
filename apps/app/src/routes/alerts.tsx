@@ -6,7 +6,7 @@ import {
   paymentAlerts,
   alertLabel,
   alertClass,
-  gradientFor,
+  gradientForSubscription,
   formatAmount,
   formatDateKo,
 } from "../lib/subscription.ts";
@@ -104,7 +104,7 @@ function AlertRow({
     >
       <div
         className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-xl"
-        style={{ background: gradientFor(s.id) }}
+        style={{ background: gradientForSubscription(s) }}
       >
         {s.icon ?? "✨"}
       </div>

@@ -1,16 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Pencil } from "lucide-react";
 import {
   type Currency,
   type CycleUnit,
   currencyOptions,
   cycleUnits,
-  gradientFor,
+  gradients,
+  gradientFromHex,
 } from "../lib/subscription.ts";
 import { EmojiPicker } from "./EmojiPicker.tsx";
 
 export type SubscriptionFormValues = {
   name: string;
   icon: string;
+  colorPreset: number;
+  iconColor: string | null;
   amount: number;
   currency: Currency;
   cycleUnit: CycleUnit;
@@ -26,7 +30,6 @@ export function SubscriptionForm({
   title,
   submitLabel,
   initial,
-  gradientSeed,
   onSubmit,
   onCancel,
   isPending,
@@ -35,7 +38,6 @@ export function SubscriptionForm({
   title: string;
   submitLabel: string;
   initial: SubscriptionFormValues;
-  gradientSeed: string;
   onSubmit: (values: SubscriptionFormValues) => void;
   onCancel: () => void;
   isPending: boolean;
@@ -43,6 +45,23 @@ export function SubscriptionForm({
 }) {
   const [form, setForm] = useState<SubscriptionFormValues>(initial);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const currentBg = form.iconColor
+    ? gradientFromHex(form.iconColor)
+    : gradients[form.colorPreset];
+
+  // hex 직접 입력 — 스와치/컬러피커와 양방향 동기화
+  const [hexInput, setHexInput] = useState(form.iconColor ?? "");
+  useEffect(() => {
+    setHexInput(form.iconColor ?? "");
+  }, [form.iconColor]);
+  const hexValid = /^#[0-9a-f]{6}$/i.test(hexInput);
+
+  const onHexChange = (raw: string) => {
+    let v = raw.trim();
+    if (v && !v.startsWith("#")) v = "#" + v;
+    setHexInput(v);
+    if (/^#[0-9a-f]{6}$/i.test(v)) setForm({ ...form, iconColor: v.toLowerCase() });
+  };
 
   return (
     <div className="min-h-screen bg-[#0f0f14] text-white">
@@ -82,21 +101,16 @@ export function SubscriptionForm({
           <button
             type="button"
             onClick={() => setPickerOpen((o) => !o)}
-            className="mx-auto mb-2.5 flex h-[68px] w-[68px] items-center justify-center rounded-[18px] text-3xl shadow-[0_4px_20px_rgba(74,58,255,0.4)] active:scale-95"
-            style={{ background: gradientFor(gradientSeed) }}
+            aria-label="아이콘·색상 변경"
+            className="relative mx-auto mb-3 flex h-[68px] w-[68px] items-center justify-center rounded-[18px] text-3xl shadow-[0_4px_20px_rgba(74,58,255,0.4)] active:scale-95"
+            style={{ background: currentBg }}
           >
             {form.icon || "✨"}
+            <span className="absolute -bottom-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full border border-white/15 bg-[#1e1e2e] text-white/80 shadow-md">
+              <Pencil size={13} />
+            </span>
           </button>
-          <div>
-            <button
-              type="button"
-              onClick={() => setPickerOpen((o) => !o)}
-              className="text-[11px] text-[#8b7fff]"
-            >
-              {pickerOpen ? "닫기" : "아이콘 변경"}
-            </button>
-          </div>
-          <div className="mt-2 px-10">
+          <div className="px-10">
             <input
               className="w-full border-b border-white/10 bg-transparent pb-1 text-center text-lg font-semibold outline-none focus:border-[#4a3aff]"
               value={form.name}
@@ -106,15 +120,70 @@ export function SubscriptionForm({
           </div>
         </div>
 
-        {/* emoji picker */}
+        {/* 색상 + 이모지 통합 패널 (연필 클릭 시) */}
         {pickerOpen && (
-          <div className="mx-5 mb-4">
+          <div className="mx-5 mb-4 rounded-2xl border border-white/[0.08] bg-[#15151d] p-3">
+            <div className="mb-2 text-[11px] uppercase tracking-wider text-white/35">색상</div>
+            <div className="mb-3 flex flex-wrap justify-center gap-2.5">
+              {gradients.map((g, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setForm({ ...form, colorPreset: i, iconColor: null })}
+                  aria-label={`색상 ${i + 1}`}
+                  className={`h-7 w-7 rounded-full transition-transform active:scale-90 ${
+                    !form.iconColor && form.colorPreset === i
+                      ? "ring-2 ring-white ring-offset-2 ring-offset-[#15151d]"
+                      : "opacity-80"
+                  }`}
+                  style={{ background: g }}
+                />
+              ))}
+              {/* 커스텀 색 — 무지개 칸을 직접 탭하면 OS 컬러 피커 (모바일 포함) */}
+              <div
+                className={`relative h-7 w-7 overflow-hidden rounded-full transition-transform active:scale-90 ${
+                  form.iconColor
+                    ? "ring-2 ring-white ring-offset-2 ring-offset-[#15151d]"
+                    : "opacity-90"
+                }`}
+                style={{
+                  background: form.iconColor
+                    ? form.iconColor
+                    : "conic-gradient(from 0deg, #ff5f6d, #ffc371, #47e891, #2bd2ff, #4a3aff, #c850c0, #ff5f6d)",
+                }}
+              >
+                <input
+                  type="color"
+                  aria-label="커스텀 색상"
+                  value={form.iconColor ?? "#4a3aff"}
+                  onChange={(e) => setForm({ ...form, iconColor: e.target.value })}
+                  className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                />
+              </div>
+            </div>
+
+            {/* hex 직접 입력 — 커스텀(무지개) 색일 때만 노출 */}
+            {form.iconColor && (
+              <div className="mb-3 flex items-center justify-center gap-2">
+                <span className="text-[11px] font-medium text-white/35">HEX</span>
+                <input
+                  type="text"
+                  value={hexInput}
+                  onChange={(e) => onHexChange(e.target.value)}
+                  placeholder="#4a3aff"
+                  maxLength={7}
+                  spellCheck={false}
+                  className={`w-28 rounded-lg border bg-white/[0.04] px-3 py-1.5 text-center text-sm outline-none focus:border-[#4a3aff] ${
+                    hexInput && !hexValid ? "border-[rgba(248,113,113,0.5)]" : "border-white/10"
+                  }`}
+                />
+              </div>
+            )}
+            <div className="mb-2.5 h-px bg-white/[0.06]" />
+            <div className="mb-2 text-[11px] uppercase tracking-wider text-white/35">이모지</div>
             <EmojiPicker
               value={form.icon}
-              onSelect={(emoji) => {
-                setForm({ ...form, icon: emoji });
-                setPickerOpen(false);
-              }}
+              onSelect={(emoji) => setForm({ ...form, icon: emoji })}
             />
           </div>
         )}

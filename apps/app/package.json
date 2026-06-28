@@ -13,23 +13,24 @@
     "@lib/schema": "workspace:*",
     "@lib/shared": "workspace:*",
     "@lib/ui": "workspace:*",
-    "react": "catalog:",
-    "react-dom": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@trpc/client": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
+    "lucide-react": "^0.500.0",
+    "react": "catalog:",
+    "react-dom": "catalog:",
     "superjson": "catalog:"
   },
   "devDependencies": {
     "@lib/server": "workspace:*",
-    "typescript": "catalog:",
-    "vite": "catalog:",
-    "@vitejs/plugin-react": "catalog:",
-    "tailwindcss": "catalog:",
     "@tailwindcss/vite": "catalog:",
     "@tanstack/router-plugin": "catalog:",
     "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0"
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "catalog:",
+    "tailwindcss": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:"
   }
 }

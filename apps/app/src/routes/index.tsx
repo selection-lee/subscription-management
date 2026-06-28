@@ -6,7 +6,7 @@ import { useTRPC } from "../trpc.ts";
 import {
   type SortKey,
   sortLabels,
-  gradientFor,
+  gradientForSubscription,
   daysUntil,
   dDayLabel,
   ddayClass,
@@ -211,7 +211,7 @@ function SubscriptionCard({ subscription }: { subscription: Subscription }) {
       <div className="flex items-center gap-2.5">
         <div
           className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl text-xl"
-          style={{ background: gradientFor(subscription.id) }}
+          style={{ background: gradientForSubscription(subscription) }}
         >
           {subscription.icon ?? "✨"}
         </div>

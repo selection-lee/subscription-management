@@ -70,6 +70,8 @@ model Subscription {
 
   name            String /// 구독 서비스명
   icon            String? /// base64/URL/이모지
+  colorPreset     Int?               @map("color_preset") /// 아이콘 그라디언트 프리셋 0-5 (null이면 id 해시)
+  iconColor       String?            @map("icon_color") /// 커스텀 배경색 hex (#rrggbb). 있으면 프리셋보다 우선
   startDate       DateTime           @map("start_date") /// 구독 시작일
   endDate         DateTime?          @map("end_date") /// 구독 종료일 (null이면 무기한)
   amount          Decimal /// 결제 금액

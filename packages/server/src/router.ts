@@ -52,6 +52,8 @@ export const appRouter = router({
           userId: user.id,
           name: input.name,
           icon: input.icon,
+          colorPreset: input.colorPreset ?? null,
+          iconColor: input.iconColor ?? null,
           amount: input.amount,
           currency: input.currency,
           cycleUnit: input.cycleUnit,
@@ -77,6 +79,8 @@ export const appRouter = router({
       const updateData: Record<string, unknown> = {};
       if (input.name !== undefined) updateData.name = input.name;
       if (input.icon !== undefined) updateData.icon = input.icon;
+      if (input.colorPreset !== undefined) updateData.colorPreset = input.colorPreset;
+      if (input.iconColor !== undefined) updateData.iconColor = input.iconColor;
       if (input.amount !== undefined) updateData.amount = input.amount;
       if (input.currency !== undefined) updateData.currency = input.currency;
       if (input.cycleUnit !== undefined) updateData.cycleUnit = input.cycleUnit;

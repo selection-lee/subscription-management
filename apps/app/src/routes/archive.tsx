@@ -2,7 +2,12 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Subscription } from "@lib/schema";
 import { useTRPC } from "../trpc.ts";
-import { gradientFor, cycleLabel, formatAmount, formatDateKo } from "../lib/subscription.ts";
+import {
+  gradientForSubscription,
+  cycleLabel,
+  formatAmount,
+  formatDateKo,
+} from "../lib/subscription.ts";
 
 export const Route = createFileRoute("/archive")({
   component: ArchivePage,
@@ -92,7 +97,7 @@ function ArchiveRow({
     >
       <div
         className="flex h-[38px] w-[38px] flex-shrink-0 items-center justify-center rounded-[11px] text-lg opacity-70"
-        style={{ background: gradientFor(s.id) }}
+        style={{ background: gradientForSubscription(s) }}
       >
         {s.icon ?? "✨"}
       </div>

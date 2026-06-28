@@ -139,7 +139,7 @@ export function EmojiPicker({
   };
 
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-[#15151d] p-3">
+    <div>
       {/* 검색 + 랜덤 */}
       <div className="mb-2.5 flex items-center gap-2">
         <input

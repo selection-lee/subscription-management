@@ -22,15 +22,17 @@ function NewPage() {
   );
 
   const today = toDateInputValue(new Date());
+  const startColor = Math.floor(Math.random() * 6); // 새 구독은 무작위 색으로 시작
 
   return (
     <SubscriptionForm
       title="새 구독"
       submitLabel="추가하기"
-      gradientSeed="new"
       initial={{
         name: "",
         icon: "✨",
+        colorPreset: startColor,
+        iconColor: null,
         amount: 0,
         currency: "KRW",
         cycleUnit: "MONTH",
@@ -44,6 +46,8 @@ function NewPage() {
         createMutation.mutate({
           name: v.name,
           icon: v.icon,
+          colorPreset: v.colorPreset,
+          iconColor: v.iconColor,
           amount: v.amount,
           currency: v.currency,
           cycleUnit: v.cycleUnit,
