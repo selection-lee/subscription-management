@@ -19,6 +19,7 @@ import {
   formatAmount,
   formatDateKo,
   isInCurrentMonth,
+  paymentAlerts,
 } from "../lib/subscription.ts";
 
 export const Route = createFileRoute("/")({
@@ -67,6 +68,12 @@ function HomePage() {
     [subscriptions],
   );
 
+  const notifQuery = useQuery(trpc.notification.get.queryOptions());
+  const alertCount = useMemo(() => {
+    if (notifQuery.data?.enabled === false) return 0;
+    return paymentAlerts(subscriptions, notifQuery.data?.daysBefore ?? 1).length;
+  }, [subscriptions, notifQuery.data]);
+
   return (
     <div className="min-h-screen bg-[#0f0f14] text-white">
       <div className="mx-auto flex min-h-screen max-w-md flex-col">
@@ -105,7 +112,9 @@ function HomePage() {
           <div className="h-8 w-px bg-[rgba(74,58,255,0.35)]" />
           <SummaryCell value={`${subscriptions.length}개`} label="활성 구독" />
           <div className="h-8 w-px bg-[rgba(74,58,255,0.35)]" />
-          <SummaryCell value="0건" label="미확인 알림" />
+          <Link to="/alerts" className="text-center active:opacity-70">
+            <SummaryCell value={`${alertCount}건`} label="결제 알림" />
+          </Link>
         </div>
 
         <div className="flex items-center justify-between px-5 pb-3">

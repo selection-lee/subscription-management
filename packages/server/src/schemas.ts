@@ -56,3 +56,12 @@ export const appSettingsInput = z.object({
   currency: currencyEnum.optional(),
   defaultView: z.enum(["subscription", "stats", "alerts"]).optional(),
 });
+
+// MVP 알림 설정: 전역 on/off + 기본 시간(HH:mm). 1일전/당일은 모델 기본값 사용.
+export const notificationSettingsInput = z.object({
+  enabled: z.boolean().optional(),
+  defaultTime: z
+    .string()
+    .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "HH:mm 형식이어야 합니다")
+    .optional(),
+});

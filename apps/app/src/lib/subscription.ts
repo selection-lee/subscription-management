@@ -113,3 +113,29 @@ export function annualizedByCurrency(subs: CyclelikeSub[]): Record<string, numbe
   }
   return out;
 }
+
+// MVP 인앱 알림(§7.1·§8-16 "놓친 알림 재조립"): 결제일이 지났거나(놓침)
+// daysBefore일 이내로 임박한 활성 구독. 가장 급한(많이 지난) 순으로 정렬.
+export function paymentAlerts<T extends { nextPaymentDate: Date | string }>(
+  subs: T[],
+  daysBefore = 1,
+): { subscription: T; days: number }[] {
+  return subs
+    .map((s) => ({ subscription: s, days: daysUntil(s.nextPaymentDate) }))
+    .filter((a) => a.days <= daysBefore)
+    .sort((a, b) => a.days - b.days);
+}
+
+// 알림 D-day 라벨 (지남/오늘/내일/D-n)
+export function alertLabel(days: number): { text: string; cls: "overdue" | "today" | "soon" } {
+  if (days < 0) return { text: `${-days}일 지남`, cls: "overdue" };
+  if (days === 0) return { text: "오늘", cls: "today" };
+  if (days === 1) return { text: "내일", cls: "soon" };
+  return { text: `D-${days}`, cls: "soon" };
+}
+
+export const alertClass: Record<"overdue" | "today" | "soon", string> = {
+  overdue: "bg-[rgba(248,113,113,0.15)] text-[#f87171]",
+  today: "bg-[rgba(74,58,255,0.25)] text-[#8b7fff]",
+  soon: "bg-[rgba(139,127,255,0.18)] text-[#9b8fff]",
+};

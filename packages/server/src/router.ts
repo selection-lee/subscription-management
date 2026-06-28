@@ -4,6 +4,7 @@ import {
   appSettingsInput,
   createSubscriptionInput,
   listSubscriptionInput,
+  notificationSettingsInput,
   subscriptionIdInput,
   updateSubscriptionInput,
 } from "./schemas.ts";
@@ -130,6 +131,31 @@ export const appRouter = router({
           language: input.language,
           currency: input.currency,
           defaultView: input.defaultView,
+        },
+      });
+    }),
+  }),
+
+  notification: router({
+    get: publicProcedure.query(async () => {
+      const user = await getLocalUser();
+      return prisma.notificationSetting.findUnique({
+        where: { userId: user.id },
+      });
+    }),
+
+    update: publicProcedure.input(notificationSettingsInput).mutation(async ({ input }) => {
+      const user = await getLocalUser();
+      return prisma.notificationSetting.upsert({
+        where: { userId: user.id },
+        create: {
+          userId: user.id,
+          enabled: input.enabled ?? true,
+          defaultTime: input.defaultTime ?? "09:00",
+        },
+        update: {
+          enabled: input.enabled,
+          defaultTime: input.defaultTime,
         },
       });
     }),

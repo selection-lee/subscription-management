@@ -22,6 +22,8 @@ const defaultViewOptions: { value: DefaultView; label: string }[] = [
   { value: "alerts", label: "알림" },
 ];
 
+const timeOptions = ["08:00", "09:00", "10:00", "18:00"].map((t) => ({ value: t, label: t }));
+
 function SettingsPage() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -44,9 +46,21 @@ function SettingsPage() {
     }),
   );
 
+  const notifQuery = useQuery(trpc.notification.get.queryOptions());
+  const notifUpdate = useMutation(
+    trpc.notification.update.mutationOptions({
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: trpc.notification.get.queryKey() });
+        setSavedTick((n) => n + 1);
+      },
+    }),
+  );
+
   const s = settingsQuery.data;
   const currency = (s?.currency as Currency) ?? "KRW";
   const defaultView = (s?.defaultView as DefaultView) ?? "subscription";
+  const notifEnabled = notifQuery.data?.enabled ?? true;
+  const notifTime = notifQuery.data?.defaultTime ?? "09:00";
 
   return (
     <Shell>
@@ -92,6 +106,20 @@ function SettingsPage() {
             value={defaultView}
             onChange={(v) => updateMutation.mutate({ defaultView: v as DefaultView })}
             options={defaultViewOptions}
+          />
+        </Row>
+      </Group>
+
+      {/* 알림 */}
+      <Group label="알림">
+        <Row icon="🔔" label="결제 알림">
+          <Toggle on={notifEnabled} onChange={(v) => notifUpdate.mutate({ enabled: v })} />
+        </Row>
+        <Row icon="⏰" label="알림 시간" last>
+          <InlineSelect
+            value={notifTime}
+            onChange={(v) => notifUpdate.mutate({ defaultTime: v })}
+            options={timeOptions}
           />
         </Row>
       </Group>
@@ -193,6 +221,25 @@ function LinkRow({
       </div>
       <span className="text-white/25">›</span>
     </Link>
+  );
+}
+
+function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!on)}
+      aria-pressed={on}
+      className={`inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full p-0 outline-none transition-colors ${
+        on ? "bg-[#4a3aff]" : "bg-white/15"
+      }`}
+    >
+      <span
+        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+          on ? "translate-x-[22px]" : "translate-x-0.5"
+        }`}
+      />
+    </button>
   );
 }
 
