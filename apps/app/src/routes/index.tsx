@@ -83,7 +83,13 @@ function HomePage() {
             >
               🗃
             </Link>
-            <HeaderIconButton title="설정">⚙️</HeaderIconButton>
+            <Link
+              to="/settings"
+              title="설정"
+              className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] border border-white/10 bg-white/[0.06] text-sm"
+            >
+              ⚙️
+            </Link>
           </div>
         </header>
 
@@ -135,18 +141,6 @@ function HomePage() {
         />
       )}
     </div>
-  );
-}
-
-function HeaderIconButton({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <button
-      type="button"
-      title={title}
-      className="flex h-[34px] w-[34px] items-center justify-center rounded-[10px] border border-white/10 bg-white/[0.06] text-sm"
-    >
-      {children}
-    </button>
   );
 }
 
