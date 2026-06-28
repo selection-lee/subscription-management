@@ -1,17 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import type { Subscription } from "@lib/schema";
 import { useTRPC } from "../trpc.ts";
 import {
-  type Currency,
-  type CycleUnit,
   type SortKey,
-  currencyOptions,
-  cycleUnits,
   sortLabels,
   gradientFor,
-  toDateInputValue,
   daysUntil,
   dDayLabel,
   ddayClass,
@@ -28,19 +23,11 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const invalidateList = () =>
-    queryClient.invalidateQueries({
-      queryKey: trpc.subscription.list.queryKey(),
-    });
+  const navigate = useNavigate();
 
   const listQuery = useQuery(trpc.subscription.list.queryOptions({ status: "ACTIVE" }));
-  const createMutation = useMutation(
-    trpc.subscription.create.mutationOptions({ onSuccess: invalidateList }),
-  );
 
   const [sortKey, setSortKey] = useState<SortKey>("date");
-  const [sheetOpen, setSheetOpen] = useState(false);
 
   const subscriptions = listQuery.data ?? [];
   const isLoading = listQuery.isPending;
@@ -139,23 +126,12 @@ function HomePage() {
 
       <button
         type="button"
-        onClick={() => setSheetOpen(true)}
+        onClick={() => navigate({ to: "/subscription/new" })}
         className="fixed bottom-6 right-[max(1.5rem,calc(50%-13rem))] z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#4a3aff] text-3xl font-light leading-none text-white shadow-[0_4px_20px_rgba(74,58,255,0.5)] active:scale-95"
         aria-label="새 구독 추가"
       >
         +
       </button>
-
-      {sheetOpen && (
-        <CreateSheet
-          onClose={() => setSheetOpen(false)}
-          onSubmit={async (input) => {
-            await createMutation.mutateAsync(input);
-            setSheetOpen(false);
-          }}
-          isPending={createMutation.isPending}
-        />
-      )}
     </div>
   );
 }
@@ -268,164 +244,3 @@ function SubscriptionCard({ subscription }: { subscription: Subscription }) {
   );
 }
 
-type CreateInput = {
-  name: string;
-  icon: string;
-  amount: number;
-  currency: Currency;
-  cycleUnit: CycleUnit;
-  cycleInterval: number;
-  startDate: string;
-  nextPaymentDate: string;
-};
-
-function CreateSheet({
-  onClose,
-  onSubmit,
-  isPending,
-}: {
-  onClose: () => void;
-  onSubmit: (input: CreateInput) => Promise<void>;
-  isPending: boolean;
-}) {
-  const today = toDateInputValue(new Date());
-  const [form, setForm] = useState<CreateInput>({
-    name: "",
-    icon: "✨",
-    amount: 0,
-    currency: "KRW",
-    cycleUnit: "MONTH",
-    cycleInterval: 1,
-    startDate: today,
-    nextPaymentDate: today,
-  });
-
-  return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-black/50 sm:items-center">
-      <div className="w-full max-w-md rounded-t-3xl border-t border-white/10 bg-[#1a1a22] p-6 text-white shadow-2xl sm:rounded-3xl sm:border">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">새 구독 추가</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full p-1 text-white/50 hover:bg-white/10"
-          >
-            ✕
-          </button>
-        </div>
-        <form
-          className="grid gap-3 sm:grid-cols-2"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void onSubmit(form);
-          }}
-        >
-          <SheetField label="서비스 이름" className="sm:col-span-2">
-            <input
-              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm outline-none focus:border-[#4a3aff]"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-              autoFocus
-            />
-          </SheetField>
-          <SheetField label="아이콘">
-            <input
-              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm outline-none focus:border-[#4a3aff]"
-              value={form.icon}
-              onChange={(e) => setForm({ ...form, icon: e.target.value })}
-              maxLength={4}
-            />
-          </SheetField>
-          <SheetField label="통화">
-            <select
-              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm outline-none [color-scheme:dark] focus:border-[#4a3aff]"
-              value={form.currency}
-              onChange={(e) => setForm({ ...form, currency: e.target.value as Currency })}
-            >
-              {currencyOptions.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </SheetField>
-          <SheetField label="금액">
-            <input
-              type="number"
-              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm outline-none focus:border-[#4a3aff]"
-              value={form.amount}
-              onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
-              min={0}
-              required
-            />
-          </SheetField>
-          <SheetField label="주기">
-            <select
-              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm outline-none [color-scheme:dark] focus:border-[#4a3aff]"
-              value={form.cycleUnit}
-              onChange={(e) => setForm({ ...form, cycleUnit: e.target.value as CycleUnit })}
-            >
-              {cycleUnits.map((u) => (
-                <option key={u} value={u}>
-                  {u === "WEEK" ? "매주" : u === "MONTH" ? "매월" : "매년"}
-                </option>
-              ))}
-            </select>
-          </SheetField>
-          <SheetField label="시작일">
-            <input
-              type="date"
-              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm outline-none [color-scheme:dark] focus:border-[#4a3aff]"
-              value={form.startDate}
-              onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-              required
-            />
-          </SheetField>
-          <SheetField label="다음 결제일" className="sm:col-span-2">
-            <input
-              type="date"
-              className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm outline-none [color-scheme:dark] focus:border-[#4a3aff]"
-              value={form.nextPaymentDate}
-              onChange={(e) => setForm({ ...form, nextPaymentDate: e.target.value })}
-              required
-            />
-          </SheetField>
-          <div className="mt-2 flex justify-end gap-2 sm:col-span-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-lg border border-white/10 px-4 py-2 text-sm text-white/70"
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="rounded-lg bg-[#4a3aff] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-            >
-              {isPending ? "추가 중..." : "추가하기"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function SheetField({
-  label,
-  className,
-  children,
-}: {
-  label: string;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className={`space-y-1 ${className ?? ""}`}>
-      <span className="text-sm font-medium text-white/70">{label}</span>
-      {children}
-    </label>
-  );
-}
