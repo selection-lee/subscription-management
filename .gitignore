@@ -22,6 +22,3 @@ Thumbs.db
 
 # Logs
 *.log
-
-# TanStack Router generated
-apps/app/src/routeTree.gen.ts
