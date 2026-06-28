@@ -19,17 +19,21 @@
     "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf dist *.tsbuildinfo",
     "db:generate": "prisma generate",
-    "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy",
-    "db:reset": "prisma migrate reset",
-    "db:studio": "prisma studio"
+    "db:migrate": "dotenv -e ../../.env -- prisma migrate dev",
+    "db:deploy": "dotenv -e ../../.env -- prisma migrate deploy",
+    "db:reset": "dotenv -e ../../.env -- prisma migrate reset",
+    "db:studio": "dotenv -e ../../.env -- prisma studio",
+    "db:seed": "dotenv -e ../../.env -- tsx prisma/seed.ts"
   },
   "dependencies": {
     "@prisma/client": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
+    "dotenv-cli": "^7.4.0",
     "prisma": "catalog:",
+    "tsx": "^4.19.0",
     "typescript": "catalog:"
   }
 }

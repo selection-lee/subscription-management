@@ -3,5 +3,5 @@ export type {
   NotificationSetting,
   AppSetting,
   Subscription,
-  BillingCycle,
-} from "../prisma/generated/prisma/client/index.js";
+} from "@prisma/client";
+export { CycleUnit, SubscriptionStatus } from "@prisma/client";

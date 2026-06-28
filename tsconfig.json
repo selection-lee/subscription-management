@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "customConditions": ["development"],
     "strict": true,
     "target": "esnext",
     "module": "nodenext",
