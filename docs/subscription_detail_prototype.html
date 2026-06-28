@@ -1,0 +1,1908 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>구독 관리 프로토타입</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Pretendard','Noto Sans KR',sans-serif;background:#e0e0ec;min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:40px 16px;}
+.outer-wrap{display:flex;justify-content:center;align-items:flex-start;gap:18px;flex-wrap:wrap;}
+
+/* ── Phone shell ── */
+.phone{width:375px;background:#0f0f14;border-radius:40px;overflow:hidden;border:8px solid #1c1c26;box-shadow:0 24px 64px rgba(0,0,0,0.45),0 0 0 1px rgba(255,255,255,0.07);position:relative;flex-shrink:0;}
+.pi{height:780px;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;}
+.pi::-webkit-scrollbar{display:none;}
+.sb{display:flex;justify-content:space-between;align-items:center;padding:14px 20px 6px;font-size:12px;font-weight:500;color:#fff;}
+.nav{display:flex;justify-content:space-between;align-items:center;padding:8px 20px 12px;}
+.nav-btn{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.1);cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.nav-lbl{font-size:15px;font-weight:500;color:#fff;letter-spacing:-0.2px;}
+.dots-btn{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.1);cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;}
+.dd{position:absolute;top:40px;right:0;background:#1e1e2e;border:0.5px solid rgba(255,255,255,0.12);border-radius:14px;padding:6px;z-index:100;width:150px;display:none;box-shadow:0 8px 32px rgba(0,0,0,0.5);}
+.dd.show{display:block;}
+.ddi{padding:9px 12px;border-radius:8px;font-size:13px;color:rgba(255,255,255,0.75);cursor:pointer;display:flex;align-items:center;gap:8px;}
+.ddi:hover{background:rgba(255,255,255,0.06);}
+.ddi.danger{color:#f87171;}
+.dds{height:0.5px;background:rgba(255,255,255,0.08);margin:4px 0;}
+
+/* ── Service header ── */
+.svc-hdr{padding:8px 20px 20px;text-align:center;}
+.svc-icon{width:68px;height:68px;border-radius:18px;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:30px;background:linear-gradient(135deg,#1a1a6e,#4a3aff);box-shadow:0 4px 20px rgba(74,58,255,0.4);}
+.svc-icon.edit-mode{cursor:pointer;border:2px dashed rgba(139,127,255,0.5);}
+.svc-name{font-size:20px;font-weight:600;color:#fff;letter-spacing:-0.4px;margin-bottom:6px;}
+.badges{display:flex;gap:6px;justify-content:center;}
+.badge{font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;}
+.b-active{background:rgba(29,158,117,0.18);color:#4ecfa8;border:0.5px solid rgba(78,207,168,0.3);}
+.b-paid{background:rgba(74,58,255,0.15);color:#8b7fff;border:0.5px solid rgba(139,127,255,0.3);}
+
+/* ── Hero ── */
+.hero{margin:0 20px 16px;background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.1);border-radius:20px;padding:20px;}
+.hero-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.p-lbl{font-size:11px;color:rgba(255,255,255,0.45);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:4px;}
+.p-main{font-size:32px;font-weight:700;color:#fff;letter-spacing:-1px;line-height:1;}
+.p-cycle{font-size:13px;color:rgba(255,255,255,0.4);margin-top:4px;}
+.cring{position:relative;width:68px;height:68px;}
+.rsvg{transform:rotate(-90deg);}
+.rbg{fill:none;stroke:rgba(255,255,255,0.08);stroke-width:4;}
+.rfill{fill:none;stroke:#4ecfa8;stroke-width:4;stroke-linecap:round;stroke-dasharray:163;stroke-dashoffset:40;}
+.rcenter{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;}
+.rdays{font-size:15px;font-weight:700;color:#fff;line-height:1;}
+.runit{font-size:9px;color:rgba(255,255,255,0.4);margin-top:1px;}
+.next-row{margin-top:14px;padding-top:14px;border-top:0.5px solid rgba(255,255,255,0.08);display:flex;justify-content:space-between;align-items:center;}
+.next-lbl{font-size:11px;color:rgba(255,255,255,0.4);}
+.next-val{font-size:12px;color:rgba(255,255,255,0.7);font-weight:500;}
+
+/* ── Stats ── */
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 20px 16px;}
+.sc{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:14px;padding:12px;}
+.sl{font-size:10px;color:rgba(255,255,255,0.35);letter-spacing:0.3px;margin-bottom:5px;}
+.sv{font-size:15px;font-weight:600;color:#fff;letter-spacing:-0.4px;}
+.ss{font-size:10px;color:rgba(255,255,255,0.3);margin-top:2px;}
+
+/* ── Section ── */
+.sec{margin:0 20px 16px;}
+.sec-ttl{font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:10px;font-weight:500;}
+.ftabs{display:flex;gap:6px;margin-bottom:14px;}
+.ftab{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:0.5px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.45);background:transparent;transition:all 0.15s;}
+.ftab.active{background:#4a3aff;color:#fff;border-color:#4a3aff;}
+
+/* ── Timeline ── */
+.tl{position:relative;}
+.tl::before{content:'';position:absolute;left:17px;top:8px;bottom:8px;width:1px;background:rgba(255,255,255,0.08);}
+.ti{display:flex;gap:12px;position:relative;}
+.tdw{display:flex;flex-direction:column;align-items:center;flex-shrink:0;}
+.td{width:10px;height:10px;border-radius:50%;margin-top:4px;flex-shrink:0;z-index:1;}
+.td.ch{background:#f5a623;box-shadow:0 0 6px rgba(245,166,35,0.5);}
+.td.pd{background:#4ecfa8;box-shadow:0 0 6px rgba(78,207,168,0.4);}
+.td.fr{background:#8b7fff;box-shadow:0 0 6px rgba(139,127,255,0.4);}
+.td.tr{background:#60a5fa;box-shadow:0 0 6px rgba(96,165,250,0.4);}
+.tline{flex:1;width:1px;background:rgba(255,255,255,0.07);margin:3px 0;}
+.tc{flex:1;background:rgba(255,255,255,0.03);border:0.5px solid rgba(255,255,255,0.07);border-radius:12px;padding:11px 13px;margin-bottom:8px;}
+.tc.hl{border-color:rgba(245,166,35,0.25);background:rgba(245,166,35,0.05);}
+.ttop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px;}
+.tn{font-size:13px;font-weight:500;color:rgba(255,255,255,0.85);}
+.ta{font-size:14px;font-weight:600;color:#fff;}
+.tdate{font-size:11px;color:rgba(255,255,255,0.3);margin-bottom:4px;}
+.tcb{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(245,166,35,0.15);color:#f5a623;border:0.5px solid rgba(245,166,35,0.25);margin-top:3px;}
+.ttb{display:inline-block;font-size:10px;padding:2px 7px;border-radius:10px;margin-top:3px;}
+.tbp{background:rgba(78,207,168,0.12);color:#4ecfa8;border:0.5px solid rgba(78,207,168,0.2);}
+.tbf{background:rgba(139,127,255,0.12);color:#8b7fff;border:0.5px solid rgba(139,127,255,0.2);}
+.tbt{background:rgba(96,165,250,0.12);color:#60a5fa;border:0.5px solid rgba(96,165,250,0.2);}
+
+/* ── Detail card ── */
+.dc{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;}
+.dr{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:0.5px solid rgba(255,255,255,0.06);}
+.dr:last-child{border-bottom:none;}
+.dl{font-size:13px;color:rgba(255,255,255,0.45);}
+.dv{font-size:13px;color:rgba(255,255,255,0.85);font-weight:500;}
+.tgl{width:40px;height:22px;border-radius:11px;background:#4a3aff;cursor:pointer;position:relative;transition:background 0.2s;border:none;flex-shrink:0;}
+.tgl.off{background:rgba(255,255,255,0.12);}
+.tgl::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;top:3px;left:21px;transition:left 0.2s;}
+.tgl.off::after{left:3px;}
+.memo{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;padding:13px 16px;cursor:text;}
+.memo-t{font-size:13px;color:rgba(255,255,255,0.45);line-height:1.5;outline:none;}
+.bp{height:36px;}
+
+/* ── Notif expand ── */
+.nx{overflow:hidden;max-height:0;transition:max-height 0.35s ease;}
+.nx.open{max-height:600px;}
+.nli{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-top:0.5px solid rgba(255,255,255,0.06);}
+.nll{display:flex;align-items:center;gap:10px;}
+.nib{width:30px;height:30px;border-radius:9px;background:rgba(74,58,255,0.18);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.nil{font-size:13px;color:rgba(255,255,255,0.82);font-weight:500;}
+.nis{font-size:11px;color:rgba(255,255,255,0.3);margin-top:1px;}
+.ndb{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.07);border:none;cursor:pointer;color:rgba(255,255,255,0.35);font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.nar{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;cursor:pointer;border-top:0.5px solid rgba(255,255,255,0.06);}
+.nal{font-size:13px;color:#7b6fff;font-weight:500;display:flex;align-items:center;gap:5px;}
+
+/* ── Bottom sheet ── */
+.sov{position:absolute;inset:0;background:rgba(0,0,0,0.65);z-index:40;display:none;}
+.sov.show{display:block;}
+.bs{position:absolute;bottom:0;left:0;right:0;background:#181824;border-radius:22px 22px 0 0;z-index:50;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);border-top:0.5px solid rgba(255,255,255,0.1);max-height:90%;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;}
+.bs::-webkit-scrollbar{display:none;}
+.bs.show{transform:translateY(0);}
+.bsh{width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:14px auto 0;}
+.bst{font-size:16px;font-weight:600;color:#fff;letter-spacing:-0.3px;}
+.bss{font-size:12px;color:rgba(255,255,255,0.3);margin-top:3px;}
+.pr{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:0.5px solid rgba(255,255,255,0.07);cursor:pointer;}
+.pr:last-child{border-bottom:none;}
+.pl{display:flex;align-items:center;gap:10px;}
+.pra{width:20px;height:20px;border-radius:50%;border:1.5px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0;}
+.pra.sel{background:#4a3aff;border-color:#4a3aff;}
+.pra.sel::after{content:'';width:7px;height:7px;border-radius:50%;background:#fff;}
+.pn{font-size:14px;color:rgba(255,255,255,0.82);font-weight:500;}
+.pt{font-size:11px;color:rgba(255,255,255,0.3);margin-top:1px;}
+.pw{font-size:11px;color:rgba(255,255,255,0.28);text-align:right;}
+.sdiv{height:0.5px;background:rgba(255,255,255,0.08);margin:6px 0;}
+.ctr{display:flex;justify-content:space-between;align-items:center;padding:12px 0;cursor:pointer;}
+.ctl{font-size:14px;color:rgba(255,255,255,0.75);font-weight:500;}
+.cts{font-size:11px;color:rgba(255,255,255,0.25);margin-top:2px;}
+.chv{font-size:13px;color:rgba(255,255,255,0.3);transition:transform 0.2s;display:inline-block;}
+.chv.open{transform:rotate(180deg);}
+.csec{overflow:hidden;max-height:0;transition:max-height 0.3s ease;}
+.csec.open{max-height:280px;}
+.cfr{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:0.5px solid rgba(255,255,255,0.06);}
+.cfr:last-child{border-bottom:none;}
+.cfl{font-size:13px;color:rgba(255,255,255,0.4);}
+.csw{position:relative;display:inline-flex;align-items:center;}
+.csel{background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:13px;padding:5px 22px 5px 10px;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;}
+.csw::after{content:'▾';position:absolute;right:8px;color:rgba(255,255,255,0.4);font-size:10px;pointer-events:none;}
+.cni{background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:14px;font-weight:600;padding:5px 10px;width:56px;text-align:center;outline:none;}
+.cprev{background:rgba(74,58,255,0.1);border:0.5px solid rgba(74,58,255,0.25);border-radius:10px;padding:10px 12px;margin-top:10px;}
+.cpl{font-size:12px;color:#8b7fff;font-weight:500;margin-bottom:3px;}
+.cpd{font-size:12px;color:rgba(139,127,255,0.65);}
+.sact{display:flex;gap:10px;padding:14px 20px 30px;}
+.scan{flex:1;padding:13px;background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.12);border-radius:14px;color:rgba(255,255,255,0.7);font-size:14px;font-weight:500;cursor:pointer;}
+.scon{flex:2;padding:13px;background:#4a3aff;border:none;border-radius:14px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:opacity 0.15s;}
+.scon:disabled{opacity:0.35;cursor:default;}
+
+/* ── Phone 2: Notification center ── */
+.ncf{display:flex;gap:6px;padding:0 20px 14px;}
+.ntab{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:0.5px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.45);background:transparent;transition:all 0.15s;white-space:nowrap;}
+.ntab.active{background:#4a3aff;color:#fff;border-color:#4a3aff;}
+.nsh{font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.6px;text-transform:uppercase;padding:4px 20px 8px;font-weight:500;}
+.acard{margin:0 16px 10px;border-radius:16px;overflow:visible;position:relative;}
+.acp{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.1);}
+.acu{background:rgba(74,58,255,0.07);border:0.5px solid rgba(74,58,255,0.3);}
+.acs{background:rgba(245,166,35,0.05);border:0.5px solid rgba(245,166,35,0.22);}
+.acc{background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.05);opacity:0.6;}
+.udot{position:absolute;top:11px;right:11px;width:7px;height:7px;border-radius:50%;background:#4a3aff;box-shadow:0 0 6px rgba(74,58,255,0.8);}
+.acb{padding:13px 14px 11px;}
+.asr{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.asi{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.asn{font-size:14px;font-weight:600;color:#fff;letter-spacing:-0.2px;}
+.ass{font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;}
+.aar{display:flex;align-items:baseline;gap:6px;margin-bottom:10px;}
+.aam{font-size:22px;font-weight:700;color:#fff;letter-spacing:-0.6px;}
+.aad{font-size:12px;color:rgba(255,255,255,0.38);}
+.aact{display:flex;gap:8px;}
+.bsnz{flex:1;padding:9px 0;border-radius:10px;background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.65);font-size:12px;font-weight:500;cursor:pointer;}
+.bok{flex:2;padding:9px 0;border-radius:10px;background:rgba(78,207,168,0.15);border:0.5px solid rgba(78,207,168,0.3);color:#4ecfa8;font-size:12px;font-weight:600;cursor:pointer;}
+/* Snooze panel */
+.spanel{display:none;padding:8px 0 6px;}
+.spanel.open{display:block;}
+.sopts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
+.sopt{padding:7px 11px;border-radius:8px;background:rgba(245,166,35,0.12);border:0.5px solid rgba(245,166,35,0.25);color:#f5a623;font-size:12px;font-weight:500;cursor:pointer;}
+.sopt:hover{background:rgba(245,166,35,0.2);}
+.soptx{padding:7px 10px;border-radius:8px;background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.35);font-size:12px;cursor:pointer;}
+/* Custom snooze */
+.sopt-custom-row{display:flex;align-items:center;gap:6px;margin-top:2px;}
+.snz-ni{background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:13px;font-weight:600;padding:6px 8px;width:50px;text-align:center;outline:none;}
+.snz-sel-w{position:relative;display:inline-flex;align-items:center;}
+.snz-sel{background:rgba(255,255,255,0.07);border:0.5px solid rgba(255,255,255,0.12);border-radius:8px;color:#fff;font-size:12px;padding:6px 20px 6px 8px;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;}
+.snz-sel-w::after{content:'▾';position:absolute;right:7px;color:rgba(255,255,255,0.4);font-size:10px;pointer-events:none;}
+.snz-custom-apply{padding:7px 12px;border-radius:8px;background:rgba(245,166,35,0.2);border:0.5px solid rgba(245,166,35,0.35);color:#f5a623;font-size:12px;font-weight:600;cursor:pointer;}
+.snzd-info{font-size:11px;color:#f5a623;padding:6px 0 8px;display:flex;align-items:center;gap:4px;}
+.confd-info{font-size:11px;color:rgba(78,207,168,0.7);padding:6px 0 2px;display:flex;align-items:center;gap:4px;}
+
+/* ── Phone 3: Edit mode ── */
+.edit-bar{background:rgba(74,58,255,0.12);border-bottom:0.5px solid rgba(74,58,255,0.25);padding:10px 20px;display:flex;align-items:center;gap:8px;}
+.edit-bar-dot{width:6px;height:6px;border-radius:50%;background:#8b7fff;}
+.edit-bar-lbl{font-size:12px;color:#8b7fff;font-weight:500;}
+.eic{width:68px;height:68px;border-radius:18px;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;font-size:30px;background:linear-gradient(135deg,#1a1a6e,#4a3aff);box-shadow:0 4px 20px rgba(74,58,255,0.4);position:relative;cursor:pointer;}
+.eic-badge{position:absolute;bottom:-4px;right:-4px;width:20px;height:20px;border-radius:50%;background:#4a3aff;border:2px solid #0f0f14;display:flex;align-items:center;justify-content:center;}
+.ename-input{background:transparent;border:none;color:#fff;font-size:18px;font-weight:600;text-align:center;letter-spacing:-0.4px;outline:none;border-bottom:1.5px solid rgba(74,58,255,0.5);padding:2px 8px;width:100%;}
+.ename-input:focus{border-bottom-color:#8b7fff;}
+.ef{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;margin-bottom:0;}
+.efr{display:flex;justify-content:space-between;align-items:center;padding:13px 16px;border-bottom:0.5px solid rgba(255,255,255,0.06);}
+.efr:last-child{border-bottom:none;}
+.efl{font-size:13px;color:rgba(255,255,255,0.4);}
+.efi{background:transparent;border:none;color:#fff;font-size:13px;font-weight:500;text-align:right;outline:none;flex:1;min-width:0;padding-left:8px;}
+.efi::placeholder{color:rgba(255,255,255,0.2);}
+.efi:focus{color:#fff;}
+.efr-sel-w{position:relative;flex:1;display:flex;justify-content:flex-end;}
+.efr-sel{background:transparent;border:none;color:rgba(255,255,255,0.8);font-size:13px;font-weight:500;text-align:right;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;padding-right:16px;}
+.efr-sel-w::after{content:'▾';position:absolute;right:0;color:rgba(255,255,255,0.3);font-size:11px;pointer-events:none;top:50%;transform:translateY(-50%);}
+.etype-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:6px 0;}
+.etype-btn{padding:8px 4px;border-radius:10px;font-size:12px;font-weight:500;cursor:pointer;border:0.5px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.45);background:transparent;text-align:center;transition:all 0.15s;}
+.etype-btn.active{background:rgba(74,58,255,0.2);border-color:rgba(74,58,255,0.5);color:#8b7fff;}
+.estatus-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:6px 0;}
+.estatus-btn{padding:8px;border-radius:10px;font-size:12px;font-weight:500;cursor:pointer;border:0.5px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.45);background:transparent;text-align:center;transition:all 0.15s;}
+.estatus-btn.active-green{background:rgba(78,207,168,0.15);border-color:rgba(78,207,168,0.35);color:#4ecfa8;}
+.estatus-btn.active-gray{background:rgba(255,255,255,0.07);border-color:rgba(255,255,255,0.2);color:rgba(255,255,255,0.6);}
+.estatus-btn.active-red{background:rgba(248,113,113,0.15);border-color:rgba(248,113,113,0.4);color:#f87171;}
+.ememo{background:transparent;border:none;color:rgba(255,255,255,0.6);font-size:13px;line-height:1.6;width:100%;resize:none;outline:none;font-family:inherit;padding:0;}
+.save-bar{position:sticky;bottom:0;background:rgba(15,15,20,0.95);padding:14px 20px 24px;border-top:0.5px solid rgba(255,255,255,0.08);}
+.save-btn{width:100%;padding:15px;background:#4a3aff;border:none;border-radius:16px;color:#fff;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:-0.2px;}
+.del-btn{width:100%;padding:13px;background:transparent;border:0.5px solid rgba(248,113,113,0.25);border-radius:16px;color:#f87171;font-size:14px;font-weight:500;cursor:pointer;margin-top:8px;}
+/* icon popup */
+.icon-popup-ov{position:absolute;inset:0;z-index:60;display:none;background:rgba(0,0,0,0.5);}
+.icon-popup-ov.show{display:block;}
+.icon-popup{position:absolute;top:110px;left:50%;transform:translateX(-50%);background:#1e1e2e;border:0.5px solid rgba(255,255,255,0.14);border-radius:18px;padding:16px;z-index:61;width:286px;box-shadow:0 12px 40px rgba(0,0,0,0.6);}
+.ip-lbl{font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:0.6px;text-transform:uppercase;margin-bottom:8px;font-weight:500;}
+.emoji-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:14px;}
+.eg-btn{width:34px;height:34px;border-radius:8px;border:none;background:rgba(255,255,255,0.06);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;}
+.eg-btn.sel{background:rgba(74,58,255,0.35);outline:1.5px solid #8b7fff;}
+.cg-row{display:flex;gap:8px;}
+.cg-dot{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;}
+.cg-dot.sel{border-color:#fff;}
+.ip-close{width:100%;margin-top:12px;padding:9px;background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.1);border-radius:11px;color:rgba(255,255,255,0.5);font-size:13px;cursor:pointer;}
+/* promo form */
+.promo-form{overflow:hidden;max-height:0;transition:max-height 0.35s ease;}
+.promo-form.open{max-height:520px;}
+.pf-inner{background:rgba(245,166,35,0.05);border:0.5px solid rgba(245,166,35,0.2);border-radius:14px;padding:14px 15px;margin-top:8px;}
+.pf-ttl{font-size:11px;color:#f5a623;font-weight:600;letter-spacing:0.4px;text-transform:uppercase;margin-bottom:12px;}
+.pf-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid rgba(245,166,35,0.1);}
+.pf-row:last-child{border-bottom:none;}
+.pf-lbl{font-size:13px;color:rgba(255,255,255,0.45);flex-shrink:0;}
+.pf-sel-w{position:relative;display:inline-flex;align-items:center;}
+.pf-sel{background:rgba(255,255,255,0.07);border:0.5px solid rgba(245,166,35,0.25);border-radius:8px;color:#fff;font-size:13px;padding:5px 20px 5px 8px;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;max-width:160px;}
+.pf-sel-w::after{content:'▾';position:absolute;right:7px;color:rgba(245,166,35,0.5);font-size:10px;pointer-events:none;}
+.pf-inp{background:rgba(255,255,255,0.07);border:0.5px solid rgba(245,166,35,0.25);border-radius:8px;color:#fff;font-size:13px;padding:5px 9px;outline:none;text-align:right;width:130px;}
+.pf-inp::placeholder{color:rgba(255,255,255,0.2);}
+.pf-date{background:rgba(255,255,255,0.07);border:0.5px solid rgba(245,166,35,0.25);border-radius:8px;color:#fff;font-size:12px;padding:5px 7px;outline:none;color-scheme:dark;width:130px;}
+.pf-note{font-size:11px;color:rgba(245,166,35,0.55);line-height:1.5;margin-top:10px;padding-top:10px;border-top:0.5px solid rgba(245,166,35,0.1);}
+/* promo timeline dot */
+.td.promo{background:#e879a0;box-shadow:0 0 6px rgba(232,121,160,0.5);}
+/* timeline nav button */
+.tl-hidden{display:none;}
+.tl-more-btn{display:flex;align-items:center;gap:6px;font-size:12px;color:#7b6fff;cursor:pointer;padding:10px 14px;background:rgba(74,58,255,0.07);border:0.5px solid rgba(74,58,255,0.18);border-radius:12px;width:100%;margin-top:6px;font-family:inherit;font-weight:500;}
+/* undo button in alert center */
+.btn-undo{flex:1;padding:9px 0;border-radius:10px;background:rgba(248,113,113,0.1);border:0.5px solid rgba(248,113,113,0.25);color:#f87171;font-size:12px;font-weight:500;cursor:pointer;}
+/* emoji popup compact */
+.emoji-input-wrap{display:flex;align-items:center;gap:10px;padding:8px 0 12px;}
+.emoji-big-preview{font-size:38px;line-height:1;flex-shrink:0;}
+.emoji-input-col{flex:1;display:flex;flex-direction:column;gap:5px;}
+.emoji-text-input{background:rgba(255,255,255,0.07);border:0.5px solid rgba(74,58,255,0.4);border-radius:10px;color:#fff;font-size:22px;padding:8px 12px;outline:none;text-align:center;width:100%;font-family:inherit;}
+.emoji-hint{font-size:11px;color:rgba(255,255,255,0.22);line-height:1.5;}
+
+/* ── Home Screen ── */
+.home-header{padding:20px 20px 8px;display:flex;justify-content:space-between;align-items:center;}
+.home-greeting{font-size:13px;color:rgba(255,255,255,0.4);}
+.home-title{font-size:22px;font-weight:700;color:#fff;letter-spacing:-0.5px;margin-top:2px;}
+.home-summary{margin:8px 20px 16px;background:rgba(74,58,255,0.1);border:0.5px solid rgba(74,58,255,0.22);border-radius:16px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;}
+.hs-item{text-align:center;}
+.hs-val{font-size:18px;font-weight:700;color:#fff;letter-spacing:-0.5px;}
+.hs-lbl{font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px;letter-spacing:0.2px;}
+.hs-div{width:0.5px;height:32px;background:rgba(74,58,255,0.35);}
+.home-filter-row{display:flex;align-items:center;justify-content:space-between;padding:0 20px 12px;}
+.sort-dropdown-wrap{position:relative;}
+.sort-btn{display:flex;align-items:center;gap:4px;font-size:11px;color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.1);border-radius:8px;padding:5px 9px;cursor:pointer;white-space:nowrap;}
+.sort-menu{position:absolute;top:32px;right:0;background:#1e1e2e;border:0.5px solid rgba(255,255,255,0.12);border-radius:12px;padding:5px;z-index:50;width:130px;display:none;box-shadow:0 8px 24px rgba(0,0,0,0.5);}
+.sort-menu.show{display:block;}
+.sort-opt{padding:8px 10px;border-radius:8px;font-size:12px;color:rgba(255,255,255,0.65);cursor:pointer;display:flex;align-items:center;justify-content:space-between;}
+.sort-opt:hover{background:rgba(255,255,255,0.06);}
+.sort-opt.active{color:#8b7fff;}
+.sort-opt .check{font-size:11px;color:#8b7fff;}
+.subs-list{padding:0 16px;}
+.sub-card{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;padding:14px 14px 12px;margin-bottom:10px;cursor:grab;transition:transform 0.15s,opacity 0.15s;user-select:none;}
+.sub-card.dragging{opacity:0.4;transform:scale(0.97);}
+.sub-card.drag-over{border-color:rgba(74,58,255,0.5);background:rgba(74,58,255,0.08);}
+.sc-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.sc-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.sc-info{flex:1;min-width:0;}
+.sc-name{font-size:14px;font-weight:600;color:#fff;letter-spacing:-0.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sc-type{font-size:10px;margin-top:2px;display:inline-block;padding:1px 6px;border-radius:6px;}
+.sc-amount{font-size:17px;font-weight:700;color:#fff;letter-spacing:-0.5px;text-align:right;flex-shrink:0;}
+.sc-bottom{display:flex;align-items:center;justify-content:space-between;}
+.sc-date{font-size:11px;color:rgba(255,255,255,0.35);}
+.sc-days{font-size:11px;font-weight:600;padding:3px 9px;border-radius:8px;}
+.sc-days.soon{background:rgba(139,127,255,0.18);color:#9b8fff;}
+.sc-days.urgent{background:rgba(74,58,255,0.25);color:#8b7fff;}
+.sc-days.normal{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.45);}
+.drag-handle{display:flex;flex-direction:column;gap:3px;padding:6px 4px;opacity:0.25;flex-shrink:0;}
+.drag-handle span{width:16px;height:1.5px;background:#fff;border-radius:1px;display:block;}
+/* paused section */
+.paused-section-hdr{display:flex;align-items:center;justify-content:space-between;padding:4px 16px 8px;}
+.paused-hdr-lbl{font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:0.4px;font-weight:500;}
+.paused-toggle{font-size:11px;color:rgba(74,58,255,0.7);cursor:pointer;}
+.paused-card{opacity:0.5;border-style:dashed!important;}
+/* bottom tab bar */
+.tab-bar{position:absolute;bottom:0;left:0;right:0;background:rgba(15,15,20,0.97);border-top:0.5px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-around;padding:10px 0 16px;z-index:20;}
+.tb-item{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;flex:1;padding:2px 0;position:relative;}
+.tb-icon{width:24px;height:24px;display:flex;align-items:center;justify-content:center;}
+.tb-lbl{font-size:10px;color:rgba(255,255,255,0.35);font-weight:500;}
+.tb-item.active .tb-lbl{color:#fff;}
+.tb-notif-badge{position:absolute;top:0;right:calc(50% - 18px);width:16px;height:16px;border-radius:50%;background:#4a3aff;border:1.5px solid #0f0f14;display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff;font-weight:700;}
+.fab{position:absolute;bottom:72px;right:20px;width:52px;height:52px;border-radius:50%;background:#4a3aff;box-shadow:0 4px 20px rgba(74,58,255,0.5);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;font-weight:300;line-height:1;z-index:21;}
+.fab:active{transform:scale(0.93);}
+
+/* ── Settings Page ── */
+.set-profile{display:flex;align-items:center;gap:12px;margin:8px 20px 20px;background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;padding:14px 16px;}
+.set-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#4a3aff,#8b7fff);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.set-name{font-size:14px;font-weight:600;color:#fff;}
+.set-email{font-size:11px;color:rgba(255,255,255,0.35);margin-top:2px;}
+.set-group{margin:0 20px 6px;}
+.set-group-lbl{font-size:10px;color:rgba(255,255,255,0.25);letter-spacing:0.8px;text-transform:uppercase;font-weight:500;margin-bottom:8px;padding-left:2px;}
+.set-card{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;margin-bottom:16px;}
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:0.5px solid rgba(255,255,255,0.06);cursor:pointer;}
+.set-row:last-child{border-bottom:none;}
+.set-row-left{display:flex;align-items:center;gap:10px;}
+.set-ico{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.set-lbl{font-size:13px;color:rgba(255,255,255,0.82);}
+.set-val{font-size:12px;color:rgba(255,255,255,0.35);display:flex;align-items:center;gap:4px;}
+.set-chev{font-size:11px;color:rgba(255,255,255,0.2);}
+.widget-preview{background:rgba(74,58,255,0.08);border:0.5px solid rgba(74,58,255,0.2);border-radius:12px;padding:12px 14px;margin:8px 0 0;}
+.wp-title{font-size:10px;color:#8b7fff;font-weight:500;letter-spacing:0.4px;text-transform:uppercase;margin-bottom:10px;}
+.wp-demo{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;}
+.wp-svc-icon{font-size:22px;}
+.wp-info{flex:1;}
+.wp-svc-name{font-size:12px;font-weight:600;color:#fff;}
+.wp-days{font-size:11px;color:#8b7fff;margin-top:2px;}
+.wp-amount{font-size:16px;font-weight:700;color:#fff;letter-spacing:-0.4px;}
+.wp-toggle-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.wp-toggle-chip{padding:5px 11px;border-radius:20px;font-size:11px;font-weight:500;cursor:pointer;border:0.5px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);background:transparent;transition:all 0.15s;}
+.wp-toggle-chip.on{background:rgba(74,58,255,0.2);border-color:rgba(74,58,255,0.4);color:#8b7fff;}
+.logout-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:13px 16px;font-size:13px;color:rgba(248,113,113,0.7);cursor:pointer;margin:0 20px 8px;}
+.version-lbl{text-align:center;font-size:11px;color:rgba(255,255,255,0.15);padding-bottom:20px;}
+
+/* ── Stats page ── */
+.stat-coming{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px 24px;text-align:center;}
+.stat-soon-badge{font-size:10px;font-weight:600;letter-spacing:1px;color:#8b7fff;background:rgba(74,58,255,0.15);border:0.5px solid rgba(74,58,255,0.3);border-radius:20px;padding:4px 12px;margin-bottom:16px;text-transform:uppercase;}
+.stat-soon-title{font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.4px;margin-bottom:8px;}
+.stat-soon-desc{font-size:13px;color:rgba(255,255,255,0.35);line-height:1.65;}
+.stat-mock-card{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px;margin:20px 20px 0;text-align:left;}
+.smc-label{font-size:10px;color:rgba(255,255,255,0.25);letter-spacing:0.5px;text-transform:uppercase;margin-bottom:12px;}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.bar-name{font-size:11px;color:rgba(255,255,255,0.4);width:60px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bar-bg{flex:1;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;}
+.bar-val{font-size:11px;color:rgba(255,255,255,0.4);width:44px;text-align:right;flex-shrink:0;}
+.stat-summary-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 20px 0;}
+.stat-sum-card{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.07);border-radius:14px;padding:14px;}
+.stat-sum-val{font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.5px;}
+.stat-sum-lbl{font-size:11px;color:rgba(255,255,255,0.3);margin-top:3px;}
+/* account subpage sheet */
+.acct-sheet-ov{position:absolute;inset:0;background:rgba(0,0,0,0.6);z-index:40;display:none;}
+.acct-sheet-ov.show{display:block;}
+.acct-sheet{position:absolute;bottom:0;left:0;right:0;background:#181824;border-radius:22px 22px 0 0;z-index:50;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);border-top:0.5px solid rgba(255,255,255,0.1);padding-bottom:32px;}
+.acct-sheet.show{transform:translateY(0);}
+/* settings notif expand */
+.set-notif-expand{overflow:hidden;max-height:0;transition:max-height 0.3s ease;}
+.set-notif-expand.open{max-height:400px;}
+.set-notif-item{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-top:0.5px solid rgba(255,255,255,0.06);}
+.set-notif-icon-box{width:26px;height:26px;border-radius:8px;background:rgba(74,58,255,0.18);display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;}
+.set-notif-lbl{font-size:13px;color:rgba(255,255,255,0.75);font-weight:500;}
+.set-notif-sub{font-size:11px;color:rgba(255,255,255,0.28);margin-top:1px;}
+.set-notif-del{width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,0.07);border:none;cursor:pointer;color:rgba(255,255,255,0.3);font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.set-add-notif{display:flex;align-items:center;gap:5px;padding:11px 16px;border-top:0.5px solid rgba(255,255,255,0.06);font-size:13px;color:#7b6fff;font-weight:500;cursor:pointer;}
+/* drag hint */
+.drag-hint{display:flex;align-items:center;gap:5px;justify-content:center;padding:4px 0 10px;font-size:11px;color:rgba(255,255,255,0.18);}
+/* stat tab bar indicator */
+.tb-item.stat-tab .tb-lbl{color:rgba(255,255,255,0.35);}
+/* ── swipe panels ── */
+.swipe-track{display:flex;width:300%;transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);flex-shrink:0;}
+.swipe-panel{width:33.333%;flex-shrink:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;height:100%;}
+.swipe-panel::-webkit-scrollbar{display:none;}
+/* updated tab bar */
+.tab-indicator{position:absolute;bottom:0;left:0;height:2px;background:#4a3aff;border-radius:1px;width:33.333%;transition:left 0.3s cubic-bezier(0.32,0.72,0,1);}
+.tb-item.tb-active .tb-lbl{color:#fff;}
+/* ── stats full page ── */
+.stats-kpi{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 16px 14px;}
+.kpi-card{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;}
+.kpi-val{font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.5px;}
+.kpi-lbl{font-size:11px;color:rgba(255,255,255,0.32);margin-top:3px;}
+.kpi-change{font-size:11px;margin-top:4px;}.kpi-up{color:#f87171;}.kpi-dn{color:#4ecfa8;}
+.chart-card{background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;padding:16px;margin:0 16px 14px;}
+.chart-title{font-size:12px;font-weight:500;color:rgba(255,255,255,0.45);margin-bottom:12px;}
+.bar-chart{display:flex;align-items:flex-end;gap:5px;height:80px;}
+.bc-col{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;}
+.bc-bar{width:100%;border-radius:4px 4px 0 0;}
+.bc-lbl{font-size:9px;color:rgba(255,255,255,0.3);}
+.bc-val{font-size:9px;color:rgba(255,255,255,0.38);margin-bottom:2px;}
+.sp-btn{padding:5px 12px;border-radius:14px;font-size:11px;font-weight:500;cursor:pointer;border:0.5px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);background:transparent;}
+.sp-btn.active{background:#4a3aff;color:#fff;border-color:#4a3aff;}
+.top-list-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid rgba(255,255,255,0.06);}
+.top-list-item:last-child{border-bottom:none;}
+.top-rank{font-size:12px;font-weight:700;color:rgba(255,255,255,0.18);width:18px;text-align:center;flex-shrink:0;}
+.top-icon{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.top-name{flex:1;font-size:13px;color:rgba(255,255,255,0.8);font-weight:500;}
+.top-pct{font-size:10px;color:rgba(255,255,255,0.28);margin-top:2px;}
+.top-amt{font-size:14px;font-weight:700;color:#fff;}
+.sm-row{display:flex;align-items:center;padding:9px 0;border-bottom:0.5px solid rgba(255,255,255,0.06);}
+.sm-row:last-child{border-bottom:none;}
+.sm-month{font-size:13px;color:rgba(255,255,255,0.5);width:28px;flex-shrink:0;}
+.sm-bar-wrap{flex:1;margin:0 10px;height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;}
+.sm-bar{height:100%;background:linear-gradient(90deg,#4a3aff,#8b7fff);border-radius:3px;}
+.sm-amt{font-size:12px;font-weight:600;color:#fff;min-width:50px;text-align:right;}
+.type-row{display:flex;gap:6px;margin-top:2px;}
+.type-chip{flex:1;background:rgba(255,255,255,0.04);border-radius:10px;padding:10px 6px;text-align:center;}
+.type-icon{font-size:16px;margin-bottom:5px;}
+.type-name{font-size:10px;color:rgba(255,255,255,0.35);}
+.type-val{font-size:13px;font-weight:700;color:#fff;margin-top:2px;}
+.type-cnt{font-size:10px;color:rgba(255,255,255,0.25);}
+.leg{max-width:185px;padding:18px;background:#fff;border-radius:16px;border:1px solid #e5e5ea;}
+.leg h3{font-size:10px;letter-spacing:0.8px;text-transform:uppercase;color:#aaa;margin-bottom:12px;font-weight:500;}
+.li{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:12px;color:#555;}
+.ld{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.ln{margin-top:12px;padding-top:11px;border-top:1px solid #f0f0f0;font-size:11px;color:#999;line-height:1.65;}
+.ln strong{color:#666;display:block;margin-bottom:3px;font-size:11px;}
+.ia{margin-top:10px;padding:9px 10px;background:#f5f5f8;border-radius:9px;font-size:10px;color:#888;line-height:1.65;}
+.ia strong{color:#666;display:block;margin-bottom:2px;}
+</style>
+</head>
+<body>
+<div class="outer-wrap">
+
+<!-- ══════════════════════════════════
+     PHONE 0 — 메인 (통계|구독|알림 스와이프)
+══════════════════════════════════ -->
+<div class="phone" style="position:relative;display:flex;flex-direction:column;">
+  <!-- 상태바 -->
+  <div class="sb" style="flex-shrink:0;"><span>9:41</span><span style="display:flex;gap:5px;align-items:center;"><svg width="15" height="10" viewBox="0 0 15 10"><rect x="0" y="3" width="3" height="7" rx="1" fill="white" opacity="0.4"/><rect x="4" y="2" width="3" height="8" rx="1" fill="white" opacity="0.6"/><rect x="8" y="1" width="3" height="9" rx="1" fill="white" opacity="0.8"/><rect x="12" y="0" width="3" height="10" rx="1" fill="white"/></svg><svg width="14" height="10" viewBox="0 0 14 10"><rect x="1" y="2" width="10" height="6" rx="1.5" fill="none" stroke="white" stroke-width="1"/><rect x="11" y="3.5" width="2" height="3" rx="1" fill="white" opacity="0.5"/><rect x="2" y="3" width="7" height="4" rx="0.5" fill="white"/></svg></span></div>
+
+  <!-- 스와이프 트랙 (3 패널) -->
+  <div style="flex:1;overflow:hidden;position:relative;" id="swipeOuter">
+    <div class="swipe-track" id="swipeTrack" style="height:660px;">
+
+      <!-- ─ 패널 0: 통계 ─ -->
+      <div class="swipe-panel" id="panel-stats">
+        <div style="padding:20px 20px 10px;display:flex;justify-content:space-between;align-items:center;">
+          <div style="font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.4px;">통계</div>
+          <div style="display:flex;gap:5px;">
+            <button class="sp-btn active" onclick="setPeriod(this,'month')">이번 달</button>
+            <button class="sp-btn" onclick="setPeriod(this,'3m')">3개월</button>
+            <button class="sp-btn" onclick="setPeriod(this,'year')">올해</button>
+          </div>
+        </div>
+
+        <!-- KPI 카드 -->
+        <div class="stats-kpi">
+          <div class="kpi-card">
+            <div class="kpi-val">₩72,200</div>
+            <div class="kpi-lbl">이번 달 지출</div>
+            <div class="kpi-change kpi-up">▲ ₩4,300 전월 대비</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val">₩866K</div>
+            <div class="kpi-lbl">연간 예상</div>
+            <div class="kpi-change kpi-dn">▼ ₩12K 전년 대비</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val">5개</div>
+            <div class="kpi-lbl">활성 구독</div>
+            <div class="kpi-change" style="color:rgba(255,255,255,0.3);">전월 동일</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-val">₩14,440</div>
+            <div class="kpi-lbl">평균 구독 비용</div>
+            <div class="kpi-change kpi-up">▲ ₩860</div>
+          </div>
+        </div>
+
+        <!-- 월별 지출 추이 -->
+        <div class="chart-card">
+          <div class="chart-title">월별 지출 추이</div>
+          <div class="bar-chart">
+            <div class="bc-col"><div class="bc-val">63K</div><div class="bc-bar" style="height:60%;background:rgba(74,58,255,0.3);"></div><div class="bc-lbl">10</div></div>
+            <div class="bc-col"><div class="bc-val">67K</div><div class="bc-bar" style="height:64%;background:rgba(74,58,255,0.35);"></div><div class="bc-lbl">11</div></div>
+            <div class="bc-col"><div class="bc-val">68K</div><div class="bc-bar" style="height:65%;background:rgba(74,58,255,0.35);"></div><div class="bc-lbl">12</div></div>
+            <div class="bc-col"><div class="bc-val">67K</div><div class="bc-bar" style="height:64%;background:rgba(74,58,255,0.4);"></div><div class="bc-lbl">1</div></div>
+            <div class="bc-col"><div class="bc-val">68K</div><div class="bc-bar" style="height:65%;background:rgba(74,58,255,0.45);"></div><div class="bc-lbl">2</div></div>
+            <div class="bc-col"><div class="bc-val">72K</div><div class="bc-bar" style="height:70%;background:linear-gradient(180deg,#8b7fff,#4a3aff);"></div><div class="bc-lbl" style="color:#8b7fff;font-weight:600;">3</div></div>
+          </div>
+        </div>
+
+        <!-- 구독 유형별 -->
+        <div class="chart-card">
+          <div class="chart-title">유형별 구성</div>
+          <div class="type-row">
+            <div class="type-chip"><div class="type-icon">💳</div><div class="type-name">유료</div><div class="type-val">₩68K</div><div class="type-cnt">4개</div></div>
+            <div class="type-chip"><div class="type-icon">🎁</div><div class="type-name">프로모션</div><div class="type-val">₩4.2K</div><div class="type-cnt">1개</div></div>
+            <div class="type-chip"><div class="type-icon">⏸</div><div class="type-name">정지</div><div class="type-val">₩10K</div><div class="type-cnt">1개</div></div>
+          </div>
+        </div>
+
+        <!-- 서비스별 지출 Top 5 -->
+        <div class="chart-card">
+          <div class="chart-title">서비스별 지출 Top 5</div>
+          <div class="top-list-item"><span class="top-rank">1</span><div class="top-icon" style="background:linear-gradient(135deg,#6b0f1a,#d85a30);">🎨</div><div style="flex:1;"><div class="top-name">Adobe Creative</div><div class="top-pct">이번 달의 37.3%</div></div><div class="top-amt">₩26,900</div></div>
+          <div class="top-list-item"><span class="top-rank">2</span><div class="top-icon" style="background:linear-gradient(135deg,#6b0000,#e50914);">📺</div><div style="flex:1;"><div class="top-name">Netflix</div><div class="top-pct">이번 달의 23.5%</div></div><div class="top-amt">₩17,000</div></div>
+          <div class="top-list-item"><span class="top-rank">3</span><div class="top-icon" style="background:linear-gradient(135deg,#1a1a6e,#4a3aff);">🎵</div><div style="flex:1;"><div class="top-name">Spotify Premium</div><div class="top-pct">이번 달의 19.3%</div></div><div class="top-amt">₩13,900</div></div>
+          <div class="top-list-item"><span class="top-rank">4</span><div class="top-icon" style="background:linear-gradient(135deg,#1c1c1e,#555);">🍎</div><div style="flex:1;"><div class="top-name">Apple One</div><div class="top-pct">이번 달의 13.7%</div></div><div class="top-amt">₩9,900</div></div>
+          <div class="top-list-item"><span class="top-rank">5</span><div class="top-icon" style="background:linear-gradient(135deg,#0a2540,#185fa5);">☁️</div><div style="flex:1;"><div class="top-name">iCloud 200GB</div><div class="top-pct">이번 달의 1.9%</div></div><div class="top-amt">₩1,400</div></div>
+        </div>
+
+        <!-- 월별 누적 -->
+        <div class="chart-card" style="margin-bottom:20px;">
+          <div class="chart-title">월별 상세</div>
+          <div class="sm-row"><div class="sm-month">10월</div><div class="sm-bar-wrap"><div class="sm-bar" style="width:87%;"></div></div><div class="sm-amt">₩63,900</div></div>
+          <div class="sm-row"><div class="sm-month">11월</div><div class="sm-bar-wrap"><div class="sm-bar" style="width:93%;"></div></div><div class="sm-amt">₩67,900</div></div>
+          <div class="sm-row"><div class="sm-month">12월</div><div class="sm-bar-wrap"><div class="sm-bar" style="width:94%;"></div></div><div class="sm-amt">₩67,900</div></div>
+          <div class="sm-row"><div class="sm-month">1월</div><div class="sm-bar-wrap"><div class="sm-bar" style="width:93%;"></div></div><div class="sm-amt">₩67,900</div></div>
+          <div class="sm-row"><div class="sm-month">2월</div><div class="sm-bar-wrap"><div class="sm-bar" style="width:94%;"></div></div><div class="sm-amt">₩67,900</div></div>
+          <div class="sm-row"><div class="sm-month">3월</div><div class="sm-bar-wrap"><div class="sm-bar" style="width:100%;background:linear-gradient(90deg,#4a3aff,#8b7fff);"></div></div><div class="sm-amt" style="color:#8b7fff;">₩72,200</div></div>
+        </div>
+        <div style="height:80px;"></div>
+      </div>
+
+      <!-- ─ 패널 1: 구독 목록 ─ -->
+      <div class="swipe-panel" id="panel-subs">
+        <div class="home-header">
+          <div>
+            <div class="home-greeting">안녕하세요 👋</div>
+            <div class="home-title">내 구독</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <button style="width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="openArchivePage()">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1.5" y="5" width="13" height="9.5" rx="1.5" stroke="rgba(255,255,255,0.55)" stroke-width="1.2"/><path d="M5.5 5V3.5A1.5 1.5 0 017 2h2a1.5 1.5 0 011.5 1.5V5" stroke="rgba(255,255,255,0.55)" stroke-width="1.2"/><path d="M1.5 7.5h13" stroke="rgba(255,255,255,0.55)" stroke-width="1.2"/><path d="M6 10h4" stroke="rgba(255,255,255,0.55)" stroke-width="1.2" stroke-linecap="round"/></svg>
+            </button>
+            <button style="width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;cursor:pointer;" onclick="openSettingsPage()">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="rgba(255,255,255,0.55)" stroke-width="1.2"/><path d="M8 1.5v1M8 13.5v1M1.5 8h1M13.5 8h1M3.4 3.4l.7.7M11.9 11.9l.7.7M3.4 12.6l.7-.7M11.9 4.1l.7-.7" stroke="rgba(255,255,255,0.55)" stroke-width="1.2" stroke-linecap="round"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="home-summary">
+          <div class="hs-item"><div class="hs-val">₩72K</div><div class="hs-lbl">이번 달 결제</div></div>
+          <div class="hs-div"></div>
+          <div class="hs-item"><div class="hs-val">5개</div><div class="hs-lbl">활성 구독</div></div>
+          <div class="hs-div"></div>
+          <div class="hs-item"><div class="hs-val">3건</div><div class="hs-lbl">미확인 알림</div></div>
+        </div>
+        <div class="home-filter-row">
+          <span style="font-size:12px;color:rgba(255,255,255,0.5);font-weight:500;">활성 구독</span>
+          <div class="sort-dropdown-wrap">
+            <button class="sort-btn" onclick="toggleSortMenu()">
+              <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M1 2.5h9M2.5 5.5h6M4 8.5h3" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-linecap="round"/></svg>
+              <span id="sortLabel">결제 예정일순</span>
+              <span style="font-size:9px;opacity:0.5;">▾</span>
+            </button>
+            <div class="sort-menu" id="sortMenu">
+              <div class="sort-opt active" onclick="setSort('date')" id="so-date">결제 예정일순 <span class="check" id="ck-date">✓</span></div>
+              <div class="sort-opt" onclick="setSort('name')" id="so-name">이름순 <span class="check" id="ck-name" style="display:none;">✓</span></div>
+              <div class="sort-opt" onclick="setSort('amount')" id="so-amount">금액순 <span class="check" id="ck-amount" style="display:none;">✓</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="subs-list" id="subsList"></div>
+        <!-- 일시정지 접근 버튼 -->
+        <div style="padding:0 16px;margin-bottom:12px;">
+          <button onclick="openPausedPage()" style="width:100%;display:flex;align-items:center;justify-content:space-between;background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:14px;padding:13px 16px;cursor:pointer;font-family:inherit;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="display:flex;gap:-6px;">
+                <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#0d4f3c,#1d9e75);display:flex;align-items:center;justify-content:center;font-size:14px;">💼</div>
+              </div>
+              <div style="text-align:left;">
+                <div style="font-size:13px;font-weight:500;color:rgba(255,255,255,0.7);">일시정지된 구독</div>
+                <div style="font-size:11px;color:rgba(255,255,255,0.3);margin-top:1px;">1개 항목</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="background:rgba(255,255,255,0.1);border-radius:10px;padding:3px 9px;font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);">1</div>
+              <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M4.5 9.5L8 6.5 4.5 3.5" stroke="rgba(255,255,255,0.3)" stroke-width="1.2" stroke-linecap="round"/></svg>
+            </div>
+          </button>
+        </div>
+        <div style="height:90px;"></div>
+      </div>
+
+      <!-- ─ 패널 2: 알림 센터 ─ -->
+      <div class="swipe-panel" id="panel-alerts">
+        <div style="padding:20px 20px 12px;font-size:20px;font-weight:700;color:#fff;letter-spacing:-0.4px;">알림</div>
+        <div class="ncf">
+          <button class="ntab active" onclick="fnc(this,'all')">전체</button>
+          <button class="ntab" onclick="fnc(this,'pending')">미확인 <span id="pbd" style="background:rgba(74,58,255,0.28);color:#8b7fff;padding:1px 5px;border-radius:8px;font-size:10px;margin-left:1px;">3</span></button>
+          <button class="ntab" onclick="fnc(this,'confirmed')">확인됨</button>
+        </div>
+        <div id="ncc"></div>
+        <div style="height:80px;"></div>
+      </div>
+
+    </div><!-- /swipe-track -->
+  </div><!-- /swipeOuter -->
+
+  <!-- FAB (구독 탭에서만 표시) -->
+  <button class="fab" id="homeFab" onclick="alert('새 구독 추가')">+</button>
+
+  <!-- ── 아카이브 오버레이 페이지 ── -->
+  <div id="archivePageOv" style="position:absolute;inset:0;background:#0f0f14;z-index:80;display:none;flex-direction:column;transform:translateX(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);">
+    <div class="sb"><span>9:41</span></div>
+    <div class="nav">
+      <button class="nav-btn" onclick="closeArchivePage()"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+      <span class="nav-lbl">아카이브</span>
+      <div style="width:32px;"></div>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:0 16px;">
+      <div style="font-size:11px;color:rgba(255,255,255,0.25);padding:0 4px 12px;">더 이상 사용하지 않는 구독 항목입니다.</div>
+      <!-- 아카이브 항목들 -->
+      <div style="background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:14px;overflow:hidden;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:12px;padding:14px;border-bottom:0.5px solid rgba(255,255,255,0.06);">
+          <div style="width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#1a003d,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:18px;opacity:0.7;">🎧</div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.55);">Apple Music</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:2px;">₩8,900/월 · 2024년 12월 해지</div>
+          </div>
+          <button style="font-size:11px;color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.1);border-radius:8px;padding:5px 10px;cursor:pointer;">복원</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:14px;">
+          <div style="width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#1a1a6e,#4a3aff);display:flex;align-items:center;justify-content:center;font-size:18px;opacity:0.7;">🎮</div>
+          <div style="flex:1;">
+            <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.55);">Xbox Game Pass</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:2px;">₩9,900/월 · 2024년 9월 해지</div>
+          </div>
+          <button style="font-size:11px;color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.06);border:0.5px solid rgba(255,255,255,0.1);border-radius:8px;padding:5px 10px;cursor:pointer;">복원</button>
+        </div>
+      </div>
+      <div style="height:40px;"></div>
+    </div>
+  </div>
+
+  <!-- ── 일시정지 오버레이 페이지 ── -->
+  <div id="pausedPageOv" style="position:absolute;inset:0;background:#0f0f14;z-index:80;display:none;flex-direction:column;transform:translateX(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);">
+    <div class="sb"><span>9:41</span></div>
+    <div class="nav">
+      <button class="nav-btn" onclick="closePausedPage()"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+      <span class="nav-lbl">일시정지</span>
+      <div style="width:32px;"></div>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:0 16px;">
+      <div style="font-size:11px;color:rgba(255,255,255,0.25);padding:0 4px 12px;">결제가 중단된 구독 항목입니다. 언제든지 다시 활성화할 수 있습니다.</div>
+      <div id="pausedPageList"></div>
+      <div style="height:40px;"></div>
+    </div>
+  </div>
+
+  <!-- ── 설정 오버레이 페이지 ── -->
+  <div id="settingsPageOv" style="position:absolute;inset:0;background:#0f0f14;z-index:80;display:none;flex-direction:column;transform:translateX(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);overflow-y:auto;">
+    <div class="sb" style="flex-shrink:0;"><span>9:41</span></div>
+    <div class="nav" style="flex-shrink:0;">
+      <button class="nav-btn" onclick="closeSettingsPage()"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+      <span class="nav-lbl">설정</span>
+      <div style="width:32px;"></div>
+    </div>
+    <!-- 설정 내용 복사 -->
+    <div class="set-profile" style="cursor:pointer;" onclick="alert('계정')">
+      <div class="set-avatar">👤</div>
+      <div style="flex:1;"><div class="set-name">로그인하지 않음</div><div class="set-email">로그인하면 백업·동기화가 활성화됩니다</div></div>
+      <span style="font-size:16px;color:rgba(255,255,255,0.25);">›</span>
+    </div>
+    <div class="set-group">
+      <div class="set-group-lbl">일반</div>
+      <div class="set-card">
+        <div class="set-row"><div class="set-row-left"><div class="set-ico" style="background:rgba(255,255,255,0.06);">🌐</div><span class="set-lbl">언어</span></div><div class="set-val">한국어 <span class="set-chev">›</span></div></div>
+        <div class="set-row"><div class="set-row-left"><div class="set-ico" style="background:rgba(255,255,255,0.06);">💰</div><span class="set-lbl">기본 통화</span></div><div class="set-val">₩ 원 <span class="set-chev">›</span></div></div>
+        <div class="set-row"><div class="set-row-left"><div class="set-ico" style="background:rgba(255,255,255,0.06);">📱</div><span class="set-lbl">첫 화면</span></div><div class="set-val">구독 목록 <span class="set-chev">›</span></div></div>
+      </div>
+    </div>
+    <div class="set-group">
+      <div class="set-group-lbl">새 구독 추가 시 기본 알림</div>
+      <div class="set-card">
+        <div class="set-row"><div class="set-row-left"><div class="set-ico" style="background:rgba(74,58,255,0.18);">🔔</div><div><div class="set-lbl">알림 기본 적용</div><div style="font-size:11px;color:rgba(255,255,255,0.28);margin-top:1px;line-height:1.4;">켜면 새 구독에 알림이 자동 추가됩니다</div></div></div><button class="tgl off" onclick="toggleBtn(this)"></button></div>
+      </div>
+    </div>
+    <div class="set-group">
+      <div class="set-group-lbl">위젯</div>
+      <div class="set-card">
+        <div class="set-row" style="cursor:default;"><div class="set-row-left"><div class="set-ico" style="background:rgba(255,255,255,0.06);">▣</div><span class="set-lbl">다음 결제 예정 위젯</span></div><span class="set-chev">›</span></div>
+      </div>
+    </div>
+    <div class="set-group">
+      <div class="set-group-lbl">법적 고지</div>
+      <div class="set-card">
+        <div class="set-row" onclick="alert('개인정보처리방침')"><div class="set-row-left"><div class="set-ico" style="background:rgba(255,255,255,0.06);">🔒</div><span class="set-lbl">개인정보처리방침</span></div><span class="set-chev">›</span></div>
+        <div class="set-row" onclick="alert('이용약관')"><div class="set-row-left"><div class="set-ico" style="background:rgba(255,255,255,0.06);">📄</div><span class="set-lbl">이용약관</span></div><span class="set-chev">›</span></div>
+      </div>
+    </div>
+    <div class="logout-btn" onclick="alert('로그아웃')"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 12H3a1 1 0 01-1-1V3a1 1 0 011-1h2M9.5 10l3-3-3-3M12.5 7H5" stroke="#f87171" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>로그아웃</div>
+    <div class="version-lbl">v0.1.0 MVP</div>
+    <div class="bp"></div>
+  </div>
+
+  <!-- 하단 탭 바: 통계·구독·알림 -->
+  <div class="tab-bar" style="position:absolute;bottom:0;left:0;right:0;">
+    <div class="tab-indicator" id="tabIndicator"></div>
+    <div class="tb-item" id="tb-0" onclick="goTab(0)" style="flex:1;">
+      <div class="tb-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M3 15l4-5 4 3 5-7" stroke="rgba(255,255,255,0.4)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="tb-lbl">통계</span>
+    </div>
+    <div class="tb-item tb-active" id="tb-1" onclick="goTab(1)" style="flex:1;">
+      <div class="tb-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><rect x="2" y="10" width="7" height="8" rx="1.5" stroke="white" stroke-width="1.4"/><rect x="11" y="2" width="7" height="16" rx="1.5" stroke="white" stroke-width="1.4"/></svg></div>
+      <span class="tb-lbl">구독</span>
+    </div>
+    <div class="tb-item" id="tb-2" onclick="goTab(2)" style="flex:1;position:relative;">
+      <div class="tb-icon"><svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 2a6 6 0 00-6 6v3l-1.4 2.1A1.2 1.2 0 003.6 15h12.8a1.2 1.2 0 001-1.9L16 11V8a6 6 0 00-6-6z" stroke="rgba(255,255,255,0.4)" stroke-width="1.3"/><path d="M8 15.5a2 2 0 004 0" stroke="rgba(255,255,255,0.4)" stroke-width="1.3" stroke-linecap="round"/></svg></div>
+      <div class="tb-notif-badge">3</div>
+      <span class="tb-lbl">알림</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PHONE 1 — 구독 상세
+══════════════════════════════════ -->
+<div class="phone">
+  <div class="pi">
+    <div class="sb"><span>9:41</span><span style="display:flex;gap:5px;align-items:center;"><svg width="15" height="10" viewBox="0 0 15 10"><rect x="0" y="3" width="3" height="7" rx="1" fill="white" opacity="0.4"/><rect x="4" y="2" width="3" height="8" rx="1" fill="white" opacity="0.6"/><rect x="8" y="1" width="3" height="9" rx="1" fill="white" opacity="0.8"/><rect x="12" y="0" width="3" height="10" rx="1" fill="white"/></svg><svg width="14" height="10" viewBox="0 0 14 10"><rect x="1" y="2" width="10" height="6" rx="1.5" fill="none" stroke="white" stroke-width="1"/><rect x="11" y="3.5" width="2" height="3" rx="1" fill="white" opacity="0.5"/><rect x="2" y="3" width="7" height="4" rx="0.5" fill="white"/></svg></span></div>
+    <div class="nav">
+      <button class="nav-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+      <span class="nav-lbl">구독 상세</span>
+      <div style="position:relative;">
+        <button class="dots-btn" id="mb1"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="3" r="1.2" fill="white"/><circle cx="8" cy="8" r="1.2" fill="white"/><circle cx="8" cy="13" r="1.2" fill="white"/></svg></button>
+        <div class="dd" id="dd1">
+          <div class="ddi">✏️ 편집</div><div class="ddi">⧉ 복제</div>
+          <div class="dds"></div>
+          <div class="ddi">🗃 아카이브</div><div class="ddi danger">🗑 삭제</div>
+        </div>
+      </div>
+    </div>
+    <div class="svc-hdr">
+      <div class="svc-icon">🎵</div>
+      <div class="svc-name">Spotify Premium</div>
+      <div class="badges"><span class="badge b-active">● 활성</span><span class="badge b-paid">유료</span></div>
+    </div>
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="p-lbl">이번 달 결제금액</div>
+          <div class="p-main">₩13,900</div>
+          <div class="p-cycle">매월 · KRW</div>
+        </div>
+        <div class="cring">
+          <svg class="rsvg" width="68" height="68" viewBox="0 0 68 68"><circle class="rbg" cx="34" cy="34" r="26"/><circle class="rfill" cx="34" cy="34" r="26" id="rf1"/></svg>
+          <div class="rcenter"><div class="rdays">18</div><div class="runit">일 남음</div></div>
+        </div>
+      </div>
+      <div class="next-row"><span class="next-lbl">다음 결제일</span><span class="next-val">2026년 4월 12일 (일)</span></div>
+    </div>
+    <div class="stats">
+      <div class="sc"><div class="sl">총 결제금액</div><div class="sv">₩178K</div><div class="ss">누적</div></div>
+      <div class="sc"><div class="sl">결제 횟수</div><div class="sv">14회</div><div class="ss">총 횟수</div></div>
+      <div class="sc"><div class="sl">이용 기간</div><div class="sv">1년 2개월</div><div class="ss">구독 유지</div></div>
+    </div>
+    <div class="sec">
+      <div class="sec-ttl">결제 내역</div>
+      <div class="ftabs" id="ftabs1">
+        <button class="ftab active" onclick="ft(this,'all')">전체</button>
+        <button class="ftab" id="ftab-paid" onclick="ft(this,'paid')">유료</button>
+        <button class="ftab" id="ftab-free" onclick="ft(this,'free')">무료</button>
+        <button class="ftab" id="ftab-trial" onclick="ft(this,'trial')">체험판</button>
+        <button class="ftab" id="ftab-promo" style="color:rgba(232,121,160,0.7);" onclick="ft(this,'promo')">프로모션</button>
+      </div>
+      <div class="tl" id="tl1">
+        <div class="ti" data-type="paid"><div class="tdw"><div class="td pd"></div><div class="tline"></div></div><div class="tc"><div class="ttop"><div class="tn">Spotify Premium</div><div class="ta">₩13,900</div></div><div class="tdate">2026년 3월 12일</div><span class="ttb tbp">유료</span></div></div>
+        <div class="ti" data-type="paid"><div class="tdw"><div class="td ch"></div><div class="tline"></div></div><div class="tc hl"><div class="ttop"><div class="tn">요금제 변경</div><div class="ta">₩13,900</div></div><div class="tdate">2026년 2월 12일</div><div class="tcb">▲ ₩10,900 → ₩13,900 <span style="opacity:0.6">Individual→Duo</span></div></div></div>
+        <div class="ti" data-type="paid"><div class="tdw"><div class="td pd"></div><div class="tline"></div></div><div class="tc"><div class="ttop"><div class="tn">Spotify Premium</div><div class="ta">₩10,900</div></div><div class="tdate">2026년 1월 12일</div><span class="ttb tbp">유료</span></div></div>
+        <div class="ti" data-type="free"><div class="tdw"><div class="td fr"></div><div class="tline"></div></div><div class="tc"><div class="ttop"><div class="tn">Spotify (가족 공유)</div><div class="ta">₩0</div></div><div class="tdate">2025년 6월 12일 ~ 10월 12일</div><span class="ttb tbf">무료 (가족)</span></div></div>
+        <div class="ti" data-type="trial"><div class="tdw"><div class="td tr"></div><div class="tline"></div></div><div class="tc"><div class="ttop"><div class="tn">Premium 체험판</div><div class="ta">₩0</div></div><div class="tdate">2025년 3월 12일 ~ 6월 12일</div><span class="ttb tbt">체험판 (3개월)</span></div></div>
+        <div class="ti" data-type="promo"><div class="tdw"><div class="td promo"></div></div><div class="tc" style="border-color:rgba(232,121,160,0.2);background:rgba(232,121,160,0.04);"><div class="ttop"><div class="tn">프로모션 적용</div><div class="ta" style="color:#e879a0;">₩6,950</div></div><div class="tdate">2024년 9월 12일 ~ 12월 12일</div><span class="ttb" style="background:rgba(232,121,160,0.12);color:#e879a0;border:0.5px solid rgba(232,121,160,0.25);">50% 할인 (3개월)</span></div></div>
+      </div>
+      <button class="tl-more-btn" onclick="showHistoryPhone()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 5l4 4 4-4" stroke="#7b6fff" stroke-width="1.3" stroke-linecap="round"/></svg>
+        전체 내역 보기 · 8건
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" style="margin-left:auto;"><path d="M4.5 9.5L8 6.5 4.5 3.5" stroke="#7b6fff" stroke-width="1.2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="sec">
+      <div class="sec-ttl">상세 정보</div>
+      <div class="dc">
+        <div class="dr"><span class="dl">결제 금액</span><span class="dv">₩13,900 · KRW</span></div>
+        <div class="dr"><span class="dl">결제 주기</span><span class="dv">매월</span></div>
+        <div class="dr"><span class="dl">다음 결제일</span><span class="dv">2026년 4월 12일</span></div>
+        <div class="dr" style="border-bottom:none;"><span class="dl">결제 수단</span><span class="dv">•••• 1234</span></div>
+      </div>
+    </div>
+    <!-- 알림 설정 — 가격변동 알림 항목 없음 -->
+    <div class="sec">
+      <div class="sec-ttl">알림 설정</div>
+      <div class="dc" id="nc1">
+        <div class="dr">
+          <span class="dl">결제 알림</span>
+          <button class="tgl off" id="mt1" onclick="toggleMain1()"></button>
+        </div>
+        <div class="nx" id="nx1">
+          <div id="nle1"></div>
+          <div class="nar" onclick="openSheet1()">
+            <span class="nal"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0"><circle cx="7" cy="7" r="6" stroke="#7b6fff" stroke-width="1"/><path d="M7 4.5v5M4.5 7h5" stroke="#7b6fff" stroke-width="1.2" stroke-linecap="round"/></svg>알림 추가</span>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M4.5 9.5L8 6.5 4.5 3.5" stroke="#7b6fff" stroke-width="1.2" stroke-linecap="round"/></svg>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="sec">
+      <div class="sec-ttl">메모</div>
+      <div class="memo" onclick="em1()"><div class="memo-t" id="mt1txt">가족과 함께 듀오 플랜 사용 중. 매년 3월쯤 가격 인상 여부 확인할 것.</div></div>
+    </div>
+    <div class="bp"></div>
+  </div>
+  <!-- sheet -->
+  <div class="sov" id="sov1" onclick="closeSheet1()"></div>
+  <div class="bs" id="bs1">
+    <div class="bsh"></div>
+    <div style="padding:16px 20px 0;">
+      <div class="bst">알림 추가</div>
+      <div class="bss">다음 결제일 · 2026년 4월 12일</div>
+      <div style="margin-top:16px;" id="pl1"></div>
+      <div class="sdiv"></div>
+      <div class="ctr" onclick="tc1()">
+        <div><div class="ctl">사용자 설정</div><div class="cts" id="cs1lbl">날짜·시간 직접 설정</div></div>
+        <span class="chv" id="chv1">▾</span>
+      </div>
+      <div class="csec" id="csec1">
+        <div style="padding-bottom:10px;">
+          <div class="cfr"><span class="cfl">단위</span><div class="csw"><select class="csel" id="cu1" onchange="up1()"><option value="day">날</option><option value="week">주</option></select></div></div>
+          <div class="cfr"><span class="cfl">앞당기는 수</span><input class="cni" type="number" id="cn1" value="1" min="1" max="90" oninput="up1()"></div>
+          <div class="cfr"><span class="cfl">알림 시간</span><span style="font-size:13px;color:rgba(255,255,255,0.7);font-weight:500;">오전 9:00</span></div>
+          <div class="cprev"><div class="cpl" id="cp1l">하루 전</div><div class="cpd" id="cp1d">2026년 4월 11일 (토) 오전 9:00에 알림</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="sact"><button class="scan" onclick="closeSheet1()">취소</button><button class="scon" id="scb1" onclick="ca1()" disabled>확인</button></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════
+     PHONE 3 — 편집 모드
+══════════════════════════════════ -->
+<div class="phone">
+  <div class="pi">
+    <div class="sb"><span>9:41</span><span style="display:flex;gap:5px;align-items:center;"><svg width="15" height="10" viewBox="0 0 15 10"><rect x="0" y="3" width="3" height="7" rx="1" fill="white" opacity="0.4"/><rect x="4" y="2" width="3" height="8" rx="1" fill="white" opacity="0.6"/><rect x="8" y="1" width="3" height="9" rx="1" fill="white" opacity="0.8"/><rect x="12" y="0" width="3" height="10" rx="1" fill="white"/></svg><svg width="14" height="10" viewBox="0 0 14 10"><rect x="1" y="2" width="10" height="6" rx="1.5" fill="none" stroke="white" stroke-width="1"/><rect x="11" y="3.5" width="2" height="3" rx="1" fill="white" opacity="0.5"/><rect x="2" y="3" width="7" height="4" rx="0.5" fill="white"/></svg></span></div>
+
+    <!-- Edit mode nav -->
+    <div class="nav">
+      <button class="nav-btn" onclick="cancelEdit()" style="font-size:12px;color:rgba(255,255,255,0.6);background:transparent;border-color:rgba(255,255,255,0.08);">취소</button>
+      <span class="nav-lbl">편집</span>
+      <button class="nav-btn" onclick="saveEdit()" style="background:rgba(74,58,255,0.25);border-color:rgba(74,58,255,0.5);color:#8b7fff;font-size:11px;font-weight:600;width:auto;padding:0 10px;border-radius:10px;">수정완료</button>
+    </div>
+
+    <!-- 편집 중 표시 배너 -->
+    <div class="edit-bar">
+      <div class="edit-bar-dot"></div>
+      <span class="edit-bar-lbl">편집 중 · 저장하지 않으면 변경사항이 사라집니다</span>
+    </div>
+
+    <!-- 아이콘 + 이름 편집 -->
+    <div style="padding:20px 20px 16px;text-align:center;position:relative;">
+      <div class="eic" onclick="openIconMenu()" title="아이콘 변경">
+        <span id="editIcon">🎵</span>
+        <div class="eic-badge"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M7 1.5L8.5 3 3 8.5H1.5V7L7 1.5Z" stroke="white" stroke-width="1" stroke-linecap="round"/></svg></div>
+      </div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:5px;margin-bottom:10px;">탭해서 아이콘·색상 변경</div>
+      <div style="padding:0 40px;">
+        <input class="ename-input" id="enameInput" type="text" value="Spotify Premium" placeholder="서비스 이름">
+      </div>
+    </div>
+
+    <!-- 상태 (결제정보 위) -->
+    <div class="sec">
+      <div class="sec-ttl">상태</div>
+      <div style="background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;padding:10px 12px;">
+        <div class="estatus-row">
+          <button class="estatus-btn active-green" onclick="selStatus(this,'green')">● 활성</button>
+          <button class="estatus-btn" onclick="selStatus(this,'red')" style="display:flex;align-items:center;justify-content:center;gap:5px;">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="2" y="1.5" width="3" height="9" rx="1" fill="currentColor"/><rect x="7" y="1.5" width="3" height="9" rx="1" fill="currentColor"/></svg>
+            일시정지
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 결제 정보 -->
+    <div class="sec">
+      <div class="sec-ttl">결제 정보</div>
+      <div class="ef">
+        <div class="efr">
+          <span class="efl">결제 금액</span>
+          <input class="efi" type="number" value="13900" placeholder="0">
+        </div>
+        <div class="efr">
+          <span class="efl">결제 통화</span>
+          <div class="efr-sel-w">
+            <select class="efr-sel">
+              <option value="KRW" selected>KRW ₩</option>
+              <option value="USD">USD $</option>
+              <option value="EUR">EUR €</option>
+              <option value="JPY">JPY ¥</option>
+            </select>
+          </div>
+        </div>
+        <div class="efr">
+          <span class="efl">결제 주기</span>
+          <div class="efr-sel-w">
+            <select class="efr-sel" id="cycleSelect" onchange="onCycleChange()">
+              <option value="monthly" selected>매월</option>
+              <option value="yearly">매년</option>
+              <option value="weekly">매주</option>
+              <option value="custom">직접 설정</option>
+            </select>
+          </div>
+        </div>
+        <div class="efr">
+          <span class="efl">다음 결제일</span>
+          <input class="efi" type="date" value="2026-04-12" style="color-scheme:dark;">
+        </div>
+        <div class="efr">
+          <span class="efl">결제 수단</span>
+          <div class="efr-sel-w">
+            <select class="efr-sel">
+              <option value="card1" selected>•••• 1234</option>
+              <option value="card2">•••• 5678</option>
+              <option value="paypal">PayPal</option>
+              <option value="other">기타</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <!-- 직접 설정 선택 시 확장 블록 -->
+      <div id="customCycleBlock" style="overflow:hidden;max-height:0;transition:max-height 0.3s ease;margin-top:0;">
+        <div style="background:rgba(74,58,255,0.07);border:0.5px solid rgba(74,58,255,0.2);border-radius:14px;padding:14px 16px;margin-top:8px;">
+          <div style="font-size:11px;color:#8b7fff;font-weight:500;letter-spacing:0.4px;margin-bottom:12px;text-transform:uppercase;">커스텀 주기 설정</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span style="font-size:13px;color:rgba(255,255,255,0.4);white-space:nowrap;">매</span>
+            <input id="cycleNum" type="number" value="2" min="1" max="365" oninput="updateCyclePreview()" style="background:rgba(255,255,255,0.08);border:0.5px solid rgba(74,58,255,0.3);border-radius:8px;color:#fff;font-size:14px;font-weight:600;padding:7px 10px;width:64px;text-align:center;outline:none;">
+            <div style="position:relative;flex:1;">
+              <select id="cycleUnit" onchange="updateCyclePreview()" style="width:100%;background:rgba(255,255,255,0.07);border:0.5px solid rgba(74,58,255,0.3);border-radius:8px;color:#fff;font-size:13px;padding:7px 24px 7px 10px;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;">
+                <option value="day">일</option>
+                <option value="week" selected>주</option>
+                <option value="month">개월</option>
+              </select>
+              <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,0.3);font-size:11px;pointer-events:none;">▾</span>
+            </div>
+            <span style="font-size:13px;color:rgba(255,255,255,0.4);white-space:nowrap;">마다</span>
+          </div>
+          <div id="cyclePreview" style="background:rgba(74,58,255,0.12);border-radius:8px;padding:8px 10px;font-size:12px;color:rgba(139,127,255,0.75);">2주마다 · 다음 결제일 기준 반복</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 구독 유형 + 프로모션 폼 -->
+    <div class="sec">
+      <div class="sec-ttl">구독 유형</div>
+      <div style="background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;padding:10px 12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <button class="etype-btn active" onclick="selType(this)">유료</button>
+          <button class="etype-btn" onclick="selType(this)">무료</button>
+          <button class="etype-btn" onclick="selType(this)">체험판</button>
+          <button class="etype-btn" onclick="selType(this)" style="position:relative;">
+            프로모션
+            <span style="position:absolute;top:-5px;right:4px;font-size:9px;background:rgba(245,166,35,0.25);color:#f5a623;border-radius:4px;padding:1px 4px;border:0.5px solid rgba(245,166,35,0.3);">할인·쿠폰</span>
+          </button>
+        </div>
+        <div id="promoForm" class="promo-form">
+          <div class="pf-inner">
+            <div class="pf-ttl">🎁 프로모션 상세 정보</div>
+            <div class="pf-row">
+              <span class="pf-lbl">할인 유형</span>
+              <div class="pf-sel-w">
+                <select class="pf-sel" id="promoDiscountType" onchange="onPromoTypeChange()">
+                  <option value="free">완전 무료</option>
+                  <option value="amount" selected>할인 금액</option>
+                  <option value="percent">할인율 (%)</option>
+                </select>
+              </div>
+            </div>
+            <div class="pf-row" id="promoAmountRow">
+              <span class="pf-lbl">적용 금액</span>
+              <input class="pf-inp" type="number" id="promoAmt" placeholder="0" value="6950">
+            </div>
+            <div class="pf-row" id="promoPercentRow" style="display:none;">
+              <span class="pf-lbl">할인율</span>
+              <input class="pf-inp" type="number" id="promoPct" placeholder="0" max="100" value="50" style="width:80px;"> <span style="font-size:13px;color:rgba(255,255,255,0.4);margin-left:4px;">%</span>
+            </div>
+            <div class="pf-row">
+              <span class="pf-lbl">시작일</span>
+              <input class="pf-date" type="date" value="2026-04-12">
+            </div>
+            <div class="pf-row">
+              <span class="pf-lbl">종료일</span>
+              <input class="pf-date" type="date" value="2026-07-12">
+            </div>
+            <div class="pf-note">종료일 이후 정상 금액으로 새 결제 항목을 추가하면 타임라인에서 프로모션 → 정상가 전환 이력이 이어집니다.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 메모 -->
+    <div class="sec">
+      <div class="sec-ttl">메모</div>
+      <div style="background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;padding:13px 16px;">
+        <textarea class="ememo" rows="3" placeholder="메모를 입력하세요…">가족과 함께 듀오 플랜 사용 중. 매년 3월쯤 가격 인상 여부 확인할 것.</textarea>
+      </div>
+    </div>
+
+    <!-- 수정완료 버튼 -->
+    <div style="padding:0 20px 10px;">
+      <button class="save-btn" onclick="saveEdit()">수정완료</button>
+    </div>
+    <div class="bp"></div>
+  </div>
+
+  <!-- 아이콘 편집 팝업 -->
+  <div class="icon-popup-ov" id="iconPopupOv" onclick="closeIconMenu(event)">
+    <div class="icon-popup" onclick="event.stopPropagation()">
+      <div class="ip-lbl">아이콘 변경</div>
+      <div class="emoji-input-wrap">
+        <div class="emoji-big-preview" id="emojiPreview">🎵</div>
+        <div class="emoji-input-col">
+          <input class="emoji-text-input" id="emojiTextInput" type="text" maxlength="2" placeholder="😊" oninput="onEmojiInput(this)">
+        </div>
+      </div>
+      <div class="ip-lbl">배경 색상</div>
+      <div class="cg-row" id="colorGrid"></div>
+      <button class="ip-close" onclick="applyIcon()">적용</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PHONE 4 — 전체 결제 내역
+══════════════════════════════════ -->
+<div class="phone" id="phone4">
+  <div class="pi">
+    <div class="sb"><span>9:41</span><span style="display:flex;gap:5px;align-items:center;"><svg width="15" height="10" viewBox="0 0 15 10"><rect x="0" y="3" width="3" height="7" rx="1" fill="white" opacity="0.4"/><rect x="4" y="2" width="3" height="8" rx="1" fill="white" opacity="0.6"/><rect x="8" y="1" width="3" height="9" rx="1" fill="white" opacity="0.8"/><rect x="12" y="0" width="3" height="10" rx="1" fill="white"/></svg><svg width="14" height="10" viewBox="0 0 14 10"><rect x="1" y="2" width="10" height="6" rx="1.5" fill="none" stroke="white" stroke-width="1"/><rect x="11" y="3.5" width="2" height="3" rx="1" fill="white" opacity="0.5"/><rect x="2" y="3" width="7" height="4" rx="0.5" fill="white"/></svg></span></div>
+    <div class="nav">
+      <button class="nav-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+      <span class="nav-lbl">결제 내역</span>
+      <div style="width:32px;"></div>
+    </div>
+    <!-- 서비스 mini header -->
+    <div style="display:flex;align-items:center;gap:12px;padding:0 20px 16px;">
+      <div style="width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,#1a1a6e,#4a3aff);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">🎵</div>
+      <div>
+        <div style="font-size:14px;font-weight:600;color:#fff;letter-spacing:-0.2px;">Spotify Premium</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:1px;">총 8건 · ₩178K 누적</div>
+      </div>
+    </div>
+    <!-- filter tabs -->
+    <div class="ftabs" style="padding:0 20px 14px;margin:0;">
+      <button class="ftab active" onclick="fth(this,'all')">전체</button>
+      <button class="ftab" onclick="fth(this,'paid')">유료</button>
+      <button class="ftab" onclick="fth(this,'free')">무료</button>
+      <button class="ftab" onclick="fth(this,'trial')">체험판</button>
+      <button class="ftab" onclick="fth(this,'promo')" style="color:rgba(232,121,160,0.7);">프로모션</button>
+    </div>
+    <div class="sec" style="margin-top:0;">
+      <div class="tl" id="tl4">
+        <div class="ti" data-htype="paid" onclick="openEditSheet('Spotify Premium','₩13,900','2026년 3월 12일','유료')"><div class="tdw"><div class="td pd"></div><div class="tline"></div></div><div class="tc" style="cursor:pointer;"><div class="ttop"><div class="tn">Spotify Premium</div><div class="ta">₩13,900</div></div><div class="tdate">2026년 3월 12일</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px;"><span class="ttb tbp">유료</span><span style="font-size:10px;color:rgba(255,255,255,0.2);">탭하여 수정</span></div></div></div>
+        <div class="ti" data-htype="paid" onclick="openEditSheet('요금제 변경','₩13,900','2026년 2월 12일','유료')"><div class="tdw"><div class="td ch"></div><div class="tline"></div></div><div class="tc hl" style="cursor:pointer;"><div class="ttop"><div class="tn">요금제 변경</div><div class="ta">₩13,900</div></div><div class="tdate">2026년 2월 12일</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px;"><div class="tcb">▲ ₩10,900 → ₩13,900 <span style="opacity:0.6">Individual→Duo</span></div><span style="font-size:10px;color:rgba(255,255,255,0.2);">탭하여 수정</span></div></div></div>
+        <div class="ti" data-htype="paid" onclick="openEditSheet('Spotify Individual','₩10,900','2026년 1월 12일','유료')"><div class="tdw"><div class="td pd"></div><div class="tline"></div></div><div class="tc" style="cursor:pointer;"><div class="ttop"><div class="tn">Spotify Individual</div><div class="ta">₩10,900</div></div><div class="tdate">2026년 1월 12일</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px;"><span class="ttb tbp">유료</span><span style="font-size:10px;color:rgba(255,255,255,0.2);">탭하여 수정</span></div></div></div>
+        <div class="ti" data-htype="paid" onclick="openEditSheet('Spotify Individual','₩10,900','2025년 12월 12일','유료')"><div class="tdw"><div class="td pd"></div><div class="tline"></div></div><div class="tc" style="cursor:pointer;"><div class="ttop"><div class="tn">Spotify Individual</div><div class="ta">₩10,900</div></div><div class="tdate">2025년 12월 12일</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px;"><span class="ttb tbp">유료</span><span style="font-size:10px;color:rgba(255,255,255,0.2);">탭하여 수정</span></div></div></div>
+        <div class="ti" data-htype="paid" onclick="openEditSheet('가격 인상 반영','₩10,900','2025년 11월 12일','유료')"><div class="tdw"><div class="td ch"></div><div class="tline"></div></div><div class="tc hl" style="cursor:pointer;"><div class="ttop"><div class="tn">가격 인상 반영</div><div class="ta">₩10,900</div></div><div class="tdate">2025년 11월 12일</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px;"><div class="tcb">▲ ₩8,690 → ₩10,900</div><span style="font-size:10px;color:rgba(255,255,255,0.2);">탭하여 수정</span></div></div></div>
+        <div class="ti" data-htype="free" onclick="openEditSheet('Spotify (가족 공유)','₩0','2025년 6월 12일','무료')"><div class="tdw"><div class="td fr"></div><div class="tline"></div></div><div class="tc" style="cursor:pointer;"><div class="ttop"><div class="tn">Spotify (가족 공유)</div><div class="ta">₩0</div></div><div class="tdate">2025년 6월 12일 ~ 10월 12일</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px;"><span class="ttb tbf">무료 (가족)</span><span style="font-size:10px;color:rgba(255,255,255,0.2);">탭하여 수정</span></div></div></div>
+        <div class="ti" data-htype="trial" onclick="openEditSheet('Premium 체험판','₩0','2025년 3월 12일','체험판')"><div class="tdw"><div class="td tr"></div><div class="tline"></div></div><div class="tc" style="cursor:pointer;"><div class="ttop"><div class="tn">Premium 체험판</div><div class="ta">₩0</div></div><div class="tdate">2025년 3월 12일 ~ 6월 12일</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px;"><span class="ttb tbt">체험판 (3개월)</span><span style="font-size:10px;color:rgba(255,255,255,0.2);">탭하여 수정</span></div></div></div>
+        <div class="ti" data-htype="promo" onclick="openEditSheet('프로모션 적용','₩6,950','2024년 9월 12일','프로모션')"><div class="tdw"><div class="td promo"></div></div><div class="tc" style="border-color:rgba(232,121,160,0.2);background:rgba(232,121,160,0.04);cursor:pointer;"><div class="ttop"><div class="tn">프로모션 적용</div><div class="ta" style="color:#e879a0;">₩6,950</div></div><div class="tdate">2024년 9월 12일 ~ 12월 12일</div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:3px;"><span class="ttb" style="background:rgba(232,121,160,0.12);color:#e879a0;border:0.5px solid rgba(232,121,160,0.25);">50% 할인 (3개월)</span><span style="font-size:10px;color:rgba(255,255,255,0.2);">탭하여 수정</span></div></div></div>
+      </div>
+    </div>
+    <div class="bp"></div>
+  </div>
+
+  <!-- 내역 수정 시트 -->
+  <div class="sov" id="editSheetOv" onclick="closeEditSheet()"></div>
+  <div class="bs" id="editSheet">
+    <div class="bsh"></div>
+    <div style="padding:16px 20px 0;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div class="bst" id="esTitle">내역 수정</div>
+        <span style="font-size:11px;color:rgba(255,255,255,0.3);" id="esTypeTag"></span>
+      </div>
+      <div class="ef">
+        <div class="efr"><span class="efl">항목 이름</span><input class="efi" id="esName" type="text" placeholder="항목 이름"></div>
+        <div class="efr"><span class="efl">금액</span><input class="efi" id="esAmt" type="text" placeholder="₩0"></div>
+        <div class="efr"><span class="efl">날짜</span><input class="efi" id="esDate" type="text" placeholder="YYYY년 MM월 DD일"></div>
+        <div class="efr"><span class="efl">유형</span>
+          <div class="efr-sel-w">
+            <select class="efr-sel" id="esType">
+              <option value="유료">유료</option>
+              <option value="무료">무료</option>
+              <option value="체험판">체험판</option>
+              <option value="프로모션">프로모션</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div style="background:rgba(248,113,113,0.06);border:0.5px solid rgba(248,113,113,0.18);border-radius:12px;padding:10px 12px;margin-top:12px;">
+        <div style="font-size:11px;color:rgba(248,113,113,0.7);line-height:1.55;">변경 이력 노드(요금 변경, 가격 인상 등)를 삭제하면 전후 연결이 끊어집니다. 삭제 대신 수정을 권장합니다.</div>
+      </div>
+    </div>
+    <div class="sact">
+      <button class="scan" onclick="closeEditSheet()">취소</button>
+      <button class="scon" onclick="saveEditSheet()">수정 완료</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PHONE 5 — 설정
+══════════════════════════════════ -->
+<div class="phone">
+  <div class="pi">
+    <div class="sb"><span>9:41</span><span style="display:flex;gap:5px;align-items:center;"><svg width="15" height="10" viewBox="0 0 15 10"><rect x="0" y="3" width="3" height="7" rx="1" fill="white" opacity="0.4"/><rect x="4" y="2" width="3" height="8" rx="1" fill="white" opacity="0.6"/><rect x="8" y="1" width="3" height="9" rx="1" fill="white" opacity="0.8"/><rect x="12" y="0" width="3" height="10" rx="1" fill="white"/></svg><svg width="14" height="10" viewBox="0 0 14 10"><rect x="1" y="2" width="10" height="6" rx="1.5" fill="none" stroke="white" stroke-width="1"/><rect x="11" y="3.5" width="2" height="3" rx="1" fill="white" opacity="0.5"/><rect x="2" y="3" width="7" height="4" rx="0.5" fill="white"/></svg></span></div>
+    <div class="nav">
+      <button class="nav-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+      <span class="nav-lbl">설정</span>
+      <div style="width:32px;"></div>
+    </div>
+
+    <!-- 계정 프로필 (탭하면 계정 상세 시트 열림) -->
+    <div class="set-profile" style="cursor:pointer;" onclick="openAcctSheet()">
+      <div class="set-avatar">👤</div>
+      <div style="flex:1;">
+        <div class="set-name">로그인하지 않음</div>
+        <div class="set-email">로그인하면 백업·동기화가 활성화됩니다</div>
+      </div>
+      <span style="font-size:16px;color:rgba(255,255,255,0.25);">›</span>
+    </div>
+
+    <!-- 일반 설정 -->
+    <div class="set-group">
+      <div class="set-group-lbl">일반</div>
+      <div class="set-card">
+        <div class="set-row">
+          <div class="set-row-left">
+            <div class="set-ico" style="background:rgba(255,255,255,0.06);">🌐</div>
+            <span class="set-lbl">언어</span>
+          </div>
+          <div class="set-val">한국어 <span class="set-chev">›</span></div>
+        </div>
+        <div class="set-row">
+          <div class="set-row-left">
+            <div class="set-ico" style="background:rgba(255,255,255,0.06);">💰</div>
+            <span class="set-lbl">기본 통화</span>
+          </div>
+          <div class="set-val">₩ 원 <span class="set-chev">›</span></div>
+        </div>
+        <div class="set-row">
+          <div class="set-row-left">
+            <div class="set-ico" style="background:rgba(255,255,255,0.06);">📱</div>
+            <span class="set-lbl">첫 화면</span>
+          </div>
+          <div class="set-val">구독 목록 <span class="set-chev">›</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 알림 기본 설정 -->
+    <div class="set-group">
+      <div class="set-group-lbl">새 구독 추가 시 기본 알림</div>
+      <div class="set-card">
+        <!-- 전역 ON/OFF -->
+        <div class="set-row">
+          <div class="set-row-left">
+            <div class="set-ico" style="background:rgba(74,58,255,0.18);">🔔</div>
+            <div>
+              <div class="set-lbl">알림 기본 적용</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.28);margin-top:1px;line-height:1.4;">켜면 새 구독 항목에<br>아래 알림이 자동 추가됩니다</div>
+            </div>
+          </div>
+          <button class="tgl off" id="globalNotifTgl" onclick="toggleGlobalNotif(this)"></button>
+        </div>
+
+        <!-- 전역 알림 ON시 확장 -->
+        <div class="set-notif-expand" id="setNotifExpand">
+          <!-- 알림 목록 (JS 렌더링 — 기본 항목 포함) -->
+          <div id="setCustomNotifs"></div>
+          <!-- 알림 기본 시간 -->
+          <div class="set-notif-item">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="set-notif-icon-box">⏰</div>
+              <div class="set-notif-lbl">알림 기본 시간</div>
+            </div>
+            <div class="set-val">
+              <select style="background:transparent;border:none;color:rgba(255,255,255,0.6);font-size:12px;outline:none;cursor:pointer;appearance:none;-webkit-appearance:none;">
+                <option>09:00</option><option>08:00</option><option>10:00</option><option>18:00</option>
+              </select>
+              <span class="set-chev">›</span>
+            </div>
+          </div>
+          <!-- 알림 추가 -->
+          <div class="set-add-notif" onclick="openSetNotifSheet()">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="#7b6fff" stroke-width="1"/><path d="M7 4.5v5M4.5 7h5" stroke="#7b6fff" stroke-width="1.2" stroke-linecap="round"/></svg>
+            알림 추가
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 위젯 설정 -->
+    <div class="set-group">
+      <div class="set-group-lbl">위젯</div>
+      <div class="set-card">
+        <div class="set-row" style="flex-direction:column;align-items:flex-start;gap:0;cursor:default;">
+          <div style="display:flex;justify-content:space-between;width:100%;align-items:center;margin-bottom:8px;">
+            <div class="set-row-left">
+              <div class="set-ico" style="background:rgba(255,255,255,0.06);">▣</div>
+              <span class="set-lbl">다음 결제 예정 위젯</span>
+            </div>
+          </div>
+          <div class="widget-preview">
+            <div class="wp-title">미리보기</div>
+            <div class="wp-demo">
+              <div class="wp-svc-icon">🎵</div>
+              <div class="wp-info">
+                <div class="wp-svc-name" id="wp-name">Spotify Premium</div>
+                <div class="wp-days" id="wp-days">D-18</div>
+              </div>
+              <div class="wp-amount" id="wp-amt">₩13,900</div>
+            </div>
+            <div class="wp-toggle-row">
+              <button class="wp-toggle-chip on" onclick="toggleWp(this,'name')">항목명</button>
+              <button class="wp-toggle-chip on" onclick="toggleWp(this,'days')">디데이</button>
+              <button class="wp-toggle-chip on" onclick="toggleWp(this,'amt')">금액</button>
+            </div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.2);margin-top:8px;">추가 레이아웃은 추후 업데이트 예정</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 약관 -->
+    <div class="set-group">
+      <div class="set-group-lbl">법적 고지</div>
+      <div class="set-card">
+        <div class="set-row" onclick="alert('개인정보처리방침')">
+          <div class="set-row-left">
+            <div class="set-ico" style="background:rgba(255,255,255,0.06);">🔒</div>
+            <span class="set-lbl">개인정보처리방침</span>
+          </div>
+          <span class="set-chev">›</span>
+        </div>
+        <div class="set-row" onclick="alert('이용약관')">
+          <div class="set-row-left">
+            <div class="set-ico" style="background:rgba(255,255,255,0.06);">📄</div>
+            <span class="set-lbl">이용약관</span>
+          </div>
+          <span class="set-chev">›</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="logout-btn" onclick="alert('로그아웃')">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M5 12H3a1 1 0 01-1-1V3a1 1 0 011-1h2M9.5 10l3-3-3-3M12.5 7H5" stroke="#f87171" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      로그아웃
+    </div>
+    <div class="version-lbl">v0.1.0 MVP</div>
+    <div class="bp"></div>
+  </div>
+
+  <!-- 계정 바텀 시트 -->
+  <div class="acct-sheet-ov" id="acctSheetOv" onclick="closeAcctSheet()"></div>
+  <div class="acct-sheet" id="acctSheet">
+    <div class="bsh"></div>
+    <div style="padding:16px 20px 0;">
+      <div class="bst" style="margin-bottom:6px;">계정</div>
+      <div class="bss">로그인하면 여러 기기에서 구독 정보를 동기화할 수 있습니다</div>
+    </div>
+    <div style="padding:16px 20px 0;">
+      <div style="background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;overflow:hidden;">
+        <div class="set-row" onclick="alert('Google 로그인')">
+          <div class="set-row-left">
+            <div class="set-ico" style="background:rgba(66,133,244,0.15);color:#4285f4;font-weight:700;font-size:13px;">G</div>
+            <span class="set-lbl">Google로 로그인</span>
+          </div>
+          <span class="set-chev">›</span>
+        </div>
+        <div class="set-row" style="cursor:default;border-bottom:none;">
+          <div class="set-row-left">
+            <div class="set-ico" style="background:rgba(255,255,255,0.05);">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="5" r="2.5" stroke="rgba(255,255,255,0.4)" stroke-width="1.1"/><path d="M2 12c0-2.76 2.24-5 5-5s5 2.24 5 5" stroke="rgba(255,255,255,0.4)" stroke-width="1.1" stroke-linecap="round"/></svg>
+            </div>
+            <div>
+              <div class="set-lbl">로그인 없이 사용</div>
+              <div style="font-size:11px;color:rgba(255,255,255,0.28);margin-top:1px;">백업·동기화 불가</div>
+            </div>
+          </div>
+          <div style="width:8px;height:8px;border-radius:50%;background:#4ecfa8;"></div>
+        </div>
+      </div>
+    </div>
+    <div style="padding:14px 20px 8px;font-size:11px;color:rgba(255,255,255,0.2);line-height:1.55;">로그인 없이도 모든 기능을 사용할 수 있지만 기기를 변경하거나 앱을 재설치하면 데이터가 사라질 수 있습니다.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     PHONE 6 — 통계 (준비 중)
+══════════════════════════════════ -->
+<div class="phone">
+  <div class="pi">
+    <div class="sb"><span>9:41</span><span style="display:flex;gap:5px;align-items:center;"><svg width="15" height="10" viewBox="0 0 15 10"><rect x="0" y="3" width="3" height="7" rx="1" fill="white" opacity="0.4"/><rect x="4" y="2" width="3" height="8" rx="1" fill="white" opacity="0.6"/><rect x="8" y="1" width="3" height="9" rx="1" fill="white" opacity="0.8"/><rect x="12" y="0" width="3" height="10" rx="1" fill="white"/></svg><svg width="14" height="10" viewBox="0 0 14 10"><rect x="1" y="2" width="10" height="6" rx="1.5" fill="none" stroke="white" stroke-width="1"/><rect x="11" y="3.5" width="2" height="3" rx="1" fill="white" opacity="0.5"/><rect x="2" y="3" width="7" height="4" rx="0.5" fill="white"/></svg></span></div>
+    <div class="nav">
+      <div style="width:32px;"></div>
+      <span class="nav-lbl">통계</span>
+      <div style="width:32px;"></div>
+    </div>
+
+    <!-- Coming soon 헤더 -->
+    <div class="stat-coming">
+      <div class="stat-soon-badge">준비 중</div>
+      <div class="stat-soon-title">구독 통계</div>
+      <div class="stat-soon-desc">지출 패턴, 유형별 분석, 월별 추이 등<br>구독 현황을 한눈에 파악할 수 있는<br>통계 기능이 곧 출시됩니다.</div>
+    </div>
+
+    <!-- 미리보기 요약 카드 -->
+    <div class="stat-summary-row">
+      <div class="stat-sum-card" style="opacity:0.45;">
+        <div class="stat-sum-val">₩72,200</div>
+        <div class="stat-sum-lbl">이번 달 지출</div>
+      </div>
+      <div class="stat-sum-card" style="opacity:0.45;">
+        <div class="stat-sum-val">₩866,400</div>
+        <div class="stat-sum-lbl">연간 예상 지출</div>
+      </div>
+    </div>
+
+    <!-- 미리보기 바 차트 -->
+    <div class="stat-mock-card" style="opacity:0.4;margin-top:14px;">
+      <div class="smc-label">서비스별 지출</div>
+      <div class="bar-row"><span class="bar-name">Adobe</span><div class="bar-bg"><div class="bar-fill" style="width:100%;background:linear-gradient(90deg,#4a3aff,#8b7fff);"></div></div><span class="bar-val">₩26,900</span></div>
+      <div class="bar-row"><span class="bar-name">Netflix</span><div class="bar-bg"><div class="bar-fill" style="width:63%;background:linear-gradient(90deg,#4a3aff,#8b7fff);"></div></div><span class="bar-val">₩17,000</span></div>
+      <div class="bar-row"><span class="bar-name">Spotify</span><div class="bar-bg"><div class="bar-fill" style="width:52%;background:linear-gradient(90deg,#4a3aff,#8b7fff);"></div></div><span class="bar-val">₩13,900</span></div>
+      <div class="bar-row"><span class="bar-name">Apple One</span><div class="bar-bg"><div class="bar-fill" style="width:37%;background:linear-gradient(90deg,#4a3aff,#8b7fff);"></div></div><span class="bar-val">₩9,900</span></div>
+      <div class="bar-row"><span class="bar-name">iCloud</span><div class="bar-bg"><div class="bar-fill" style="width:5%;background:linear-gradient(90deg,#4a3aff,#8b7fff);"></div></div><span class="bar-val">₩1,400</span></div>
+    </div>
+
+    <!-- 알림 배너 -->
+    <div style="margin:16px 20px 0;background:rgba(74,58,255,0.1);border:0.5px solid rgba(74,58,255,0.25);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:10px;">
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="#8b7fff" stroke-width="1.2"/><path d="M9 6v4M9 12v.5" stroke="#8b7fff" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <div style="font-size:12px;color:rgba(139,127,255,0.8);line-height:1.5;">통계 기능은 다음 업데이트에서 만나볼 수 있습니다. 지금도 각 구독의 총 결제금액은 상세 페이지에서 확인 가능합니다.</div>
+    </div>
+
+    <!-- 탭 바 (통계 탭 활성) -->
+    <div class="bp"></div>
+  </div>
+</div>
+
+<!-- ── Legend ── -->
+<div class="leg">
+  <h3>타임라인</h3>
+  <div class="li"><div class="ld" style="background:#4ecfa8;"></div>유료 결제</div>
+  <div class="li"><div class="ld" style="background:#f5a623;box-shadow:0 0 4px rgba(245,166,35,0.4);"></div>요금·플랜 변경</div>
+  <div class="li"><div class="ld" style="background:#8b7fff;"></div>무료</div>
+  <div class="li"><div class="ld" style="background:#60a5fa;"></div>체험판</div>
+  <div class="li"><div class="ld" style="background:#e879a0;box-shadow:0 0 4px rgba(232,121,160,0.4);"></div>프로모션·할인</div>
+  <div class="ln"><strong>알림 플로우</strong>결제 알림 ON → 알림 추가 → 프리셋 or 사용자 설정</div>
+  <div class="ln" style="margin-top:8px;"><strong>스누즈</strong>프리셋 4종 + 직접 입력 커스텀</div>
+  <div class="ln" style="margin-top:8px;"><strong>편집 모드</strong>아이콘 탭 → 팝업에서 이모지·색상 선택, 프로모션 유형 선택 시 상세 입력폼 확장</div>
+  <div class="ia"><strong>인터랙션</strong>홈: 정렬·드래그·일시정지 토글 / 알림: 검토완료·스누즈·커스텀 / 세부: 알림 추가 시트 / 편집: 아이콘·주기·프로모션 / 내역: 탭하여 수정 / 설정: 위젯 미리보기 토글·알림 on/off 모두 동작</div>
+</div>
+
+</div>
+
+<script>
+// ─── Shared ───────────────────────────────
+var WD=['일','월','화','수','목','금','토'];
+function kor(d){return d.getFullYear()+'년 '+(d.getMonth()+1)+'월 '+d.getDate()+'일 ('+WD[d.getDay()]+')';}
+var NP=new Date(2026,3,12);
+function npd(days){var d=new Date(NP);d.setDate(d.getDate()-days);return d;}
+
+// ─── Phone 1: Detail ─────────────────────
+var n1on=false, n1list=[], n1id=1, n1sel=null, n1custom=false;
+var PRESETS=[
+  {key:'same',label:'당일에',days:0,time:'오전 9:00'},
+  {key:'d1',label:'하루 일찍',days:1,time:'오전 9:00'},
+  {key:'d2',label:'2일 전',days:2,time:'오전 9:00'},
+  {key:'d3',label:'3일 전',days:3,time:'오전 9:00'},
+  {key:'w1',label:'일주일 일찍',days:7,time:'오전 9:00'}
+];
+function added1(k){return n1list.some(function(x){return x.pk===k;});}
+function toggleMain1(){n1on=!n1on;document.getElementById('mt1').classList.toggle('off',!n1on);document.getElementById('nx1').classList.toggle('open',n1on);rnl1();}
+function rnl1(){
+  var el=document.getElementById('nle1');
+  if(!n1list.length){el.innerHTML='';return;}
+  el.innerHTML=n1list.map(function(n){
+    var d=npd(n.days);var sub=(d.getMonth()+1)+'월 '+d.getDate()+'일 · '+n.time;
+    return '<div class="nli"><div class="nll"><div class="nib">🔔</div><div><div class="nil">'+n.label+'</div><div class="nis">'+sub+'</div></div></div><button class="ndb" onclick="rn1(\''+n.id+'\')">×</button></div>';
+  }).join('');
+}
+function rn1(id){n1list=n1list.filter(function(x){return x.id!==id;});rnl1();rp1();}
+function openSheet1(){
+  n1sel=null;n1custom=false;
+  document.getElementById('csec1').classList.remove('open');
+  document.getElementById('chv1').classList.remove('open');
+  document.getElementById('cs1lbl').textContent='날짜·시간 직접 설정';
+  document.getElementById('scb1').disabled=true;
+  rp1();up1();
+  document.getElementById('sov1').classList.add('show');
+  document.getElementById('bs1').classList.add('show');
+}
+function closeSheet1(){document.getElementById('sov1').classList.remove('show');document.getElementById('bs1').classList.remove('show');}
+function rp1(){
+  document.getElementById('pl1').innerHTML=PRESETS.map(function(p){
+    var a=added1(p.key),s=n1sel===p.key;
+    var d=npd(p.days);var w=p.days===0?'결제 당일':(d.getMonth()+1)+'월 '+d.getDate()+'일';
+    return '<div class="pr" onclick="sp1(\''+p.key+'\')" style="'+(a?'opacity:0.35;pointer-events:none':'')+'">'
+      +'<div class="pl"><div class="pra'+(s?' sel':'')+'" id="pr1-'+p.key+'"></div>'
+      +'<div><div class="pn">'+p.label+'</div><div class="pt">'+p.time+'</div></div></div>'
+      +'<div class="pw">'+(a?'추가됨':w)+'</div></div>';
+  }).join('');
+}
+function sp1(k){if(added1(k))return;n1sel=n1sel===k?null:k;if(n1sel){n1custom=false;document.getElementById('csec1').classList.remove('open');document.getElementById('chv1').classList.remove('open');}rp1();document.getElementById('scb1').disabled=!n1sel&&!n1custom;}
+function tc1(){n1custom=!n1custom;document.getElementById('csec1').classList.toggle('open',n1custom);document.getElementById('chv1').classList.toggle('open',n1custom);if(n1custom){n1sel=null;rp1();up1();}document.getElementById('scb1').disabled=!n1sel&&!n1custom;}
+function up1(){
+  var u=document.getElementById('cu1').value,n=parseInt(document.getElementById('cn1').value)||1;
+  var days=u==='week'?n*7:n;var d=npd(days);
+  var lbl=n+(u==='week'?'주 전':(n===1?'일 전 (하루 일찍)':'일 전'));
+  document.getElementById('cp1l').textContent=lbl;
+  document.getElementById('cp1d').textContent=kor(d)+' 오전 9:00에 알림';
+  if(n1custom)document.getElementById('cs1lbl').textContent=n+(u==='week'?'주':'일')+' 전 · 오전 9:00';
+}
+function ca1(){
+  if(n1sel){var p=PRESETS.find(function(x){return x.key===n1sel;});n1list.push({id:'n'+(n1id++),pk:p.key,label:p.label,days:p.days,time:p.time});}
+  else if(n1custom){var u=document.getElementById('cu1').value,n=parseInt(document.getElementById('cn1').value)||1;var d=u==='week'?n*7:n;n1list.push({id:'n'+(n1id++),pk:null,label:n+(u==='week'?'주 전':'일 전'),days:d,time:'오전 9:00'});}
+  rnl1();closeSheet1();
+}
+function ft(el,t){
+  document.querySelectorAll('#ftabs1 .ftab').forEach(function(x){x.classList.remove('active');});
+  el.classList.add('active');
+  document.querySelectorAll('#tl1 .ti').forEach(function(i){
+    i.style.display=(t==='all'||i.dataset.type===t)?'flex':'none';
+  });
+}
+function initTl1Tabs(){
+  ['paid','free','trial','promo'].forEach(function(t){
+    var has=document.querySelectorAll('#tl1 .ti[data-type="'+t+'"]').length>0;
+    var btn=document.getElementById('ftab-'+t);
+    if(btn) btn.style.display=has?'':'none';
+  });
+}
+document.getElementById('mb1').addEventListener('click',function(e){e.stopPropagation();document.getElementById('dd1').classList.toggle('show');});
+document.addEventListener('click',function(){document.getElementById('dd1').classList.remove('show');});
+function em1(){var el=document.getElementById('mt1txt');el.contentEditable='true';el.style.color='rgba(255,255,255,0.75)';el.focus();}
+(function(){var c=163;document.getElementById('rf1').style.strokeDashoffset=c-(18/30)*c;})();
+
+// ─── Phone 2: Alert Center ───────────────
+var ncf='all';
+var ALERTS=[
+  {id:'a1',svc:'Spotify Premium',icon:'🎵',amt:'₩13,900',daysUntil:1,ds:'3월 26일',status:'pending',urgent:true},
+  {id:'a2',svc:'Netflix',icon:'📺',amt:'₩17,000',daysUntil:3,ds:'3월 28일',status:'pending',urgent:false},
+  {id:'a5',svc:'Spotify Premium',icon:'🎵',amt:'₩6,950 → ₩13,900',daysUntil:5,ds:'3월 30일',status:'pending',urgent:false,isPromo:true,promoMsg:'프로모션 종료 · 정상가로 전환 예정'},
+  {id:'a3',svc:'Apple One',icon:'🍎',amt:'₩9,900',daysUntil:8,ds:'4월 2일',status:'pending',urgent:false},
+  {id:'a4',svc:'Adobe Creative',icon:'🎨',amt:'₩26,900',daysUntil:6,ds:'4월 1일',status:'confirmed',ca:'오늘 오전 9:03'},
+  {id:'a6',svc:'YouTube Premium',icon:'▶️',amt:'₩14,900',daysUntil:-3,ds:'3월 22일',status:'confirmed',ca:'3월 22일 오전 8:55'}
+];
+function fnc(el,t){document.querySelectorAll('#panel-alerts .ntab').forEach(function(x){x.classList.remove('active');});el.classList.add('active');ncf=t;rnc();}
+function rnc(){
+  var pend=ALERTS.filter(function(c){return c.status!=='confirmed';});
+  var conf=ALERTS.filter(function(c){return c.status==='confirmed';});
+  var h='';
+  function mc(c){
+    var isc=c.status==='confirmed',iss=c.status==='snoozed';
+    var cls=isc?'acc':(iss?'acs':(c.isPromo?'acard" style="margin:0 16px 10px;border-radius:16px;overflow:visible;position:relative;background:rgba(232,121,160,0.05);border:0.5px solid rgba(232,121,160,0.28)':c.urgent?'acu':'acp'));
+    h+='<div class="acard '+cls+'" id="ac-'+c.id+'">';
+    if(!isc&&!iss)h+='<div class="udot" style="'+(c.isPromo?'background:#e879a0;box-shadow:0 0 6px rgba(232,121,160,0.7);':'')+'"></div>';
+    h+='<div class="acb">';
+    h+='<div class="asr"><div class="asi">'+c.icon+'</div><div><div class="asn">'+c.svc+'</div>';
+    if(isc)h+='<div class="ass">확인됨 · '+c.ca+'</div>';
+    else if(iss)h+='<div class="ass" style="color:#f5a623;">스누즈 · '+c.sl+'에 재알림</div>';
+    else if(c.isPromo)h+='<div class="ass" style="color:#e879a0;">'+c.promoMsg+'</div>';
+    else{var ds=c.daysUntil===1?'내일 결제 예정':c.daysUntil+'일 후 결제 예정';h+='<div class="ass" style="'+(c.urgent?'color:#9b8fff;':'')+'">'+ds+'</div>';}
+    h+='</div></div>';
+    h+='<div class="aar"><span class="aam">'+c.amt+'</span>';
+    if(!isc){
+      var dayTag='';
+      if(c.daysUntil===1) dayTag='<span style="font-size:11px;background:rgba(139,127,255,0.18);color:#9b8fff;border:0.5px solid rgba(139,127,255,0.3);border-radius:8px;padding:2px 7px;margin-left:4px;font-weight:500;">내일</span>';
+      else if(c.daysUntil>1) dayTag='<span style="font-size:11px;background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.4);border:0.5px solid rgba(255,255,255,0.1);border-radius:8px;padding:2px 7px;margin-left:4px;">D-'+c.daysUntil+'</span>';
+      h+='<span class="aad">'+c.ds+'</span>'+dayTag;
+    } else {
+      h+='<span class="aad">'+c.ds+'</span>';
+    }
+    h+='</div>';
+    if(isc){
+      h+='<div class="confd-info">✓ 결제 예정 확인 완료 · '+c.ca+'</div>';
+      if(c.daysUntil>0){
+        h+='<div class="aact" style="margin-top:4px;"><button class="btn-undo" onclick="undoConf(\''+c.id+'\')">↩ 검토 취소하기</button></div>';
+      }
+    } else {
+      // snooze panel
+      h+='<div class="spanel" id="sp-'+c.id+'">';
+      h+='<div class="sopts">';
+      h+='<button class="sopt" onclick="applyS(\''+c.id+'\',\'1시간 후\')">1시간 후</button>';
+      h+='<button class="sopt" onclick="applyS(\''+c.id+'\',\'3시간 후\')">3시간 후</button>';
+      h+='<button class="sopt" onclick="applyS(\''+c.id+'\',\'내일 아침\')">내일 아침</button>';
+      h+='<button class="sopt" onclick="applyS(\''+c.id+'\',\'다음 주\')">다음 주</button>';
+      h+='</div>';
+      // custom snooze row
+      h+='<div class="sopt-custom-row">';
+      h+='<input class="snz-ni" type="number" id="sni-'+c.id+'" value="2" min="1" max="72">';
+      h+='<div class="snz-sel-w"><select class="snz-sel" id="sns-'+c.id+'"><option value="시간">시간 후</option><option value="일">일 후</option><option value="주">주 후</option></select></div>';
+      h+='<button class="snz-custom-apply" onclick="applyCustomS(\''+c.id+'\')">설정</button>';
+      h+='<button class="soptx" onclick="closeSp(\''+c.id+'\')">×</button>';
+      h+='</div>';
+      h+='</div>';
+      if(iss)h+='<div class="snzd-info">⏰ '+c.sl+'에 다시 알림</div>';
+      h+='<div class="aact">';
+      h+='<button class="bsnz" onclick="toggleSp(\''+c.id+'\')">다시 알림 ▾</button>';
+      h+='<button class="bok" onclick="doConf(\''+c.id+'\')">✓ 검토 완료하기</button>';
+      h+='</div>';
+    }
+    h+='</div></div>';
+  }
+  if(ncf!=='confirmed'&&pend.length){h+='<div class="nsh">미확인 · '+pend.length+'건</div>';pend.forEach(mc);}
+  if(ncf!=='pending'&&conf.length){h+='<div class="nsh" style="margin-top:8px;">확인됨 · '+conf.length+'건</div>';conf.forEach(mc);}
+  if(!h)h='<div style="text-align:center;padding:60px 20px;color:rgba(255,255,255,0.18);font-size:14px;">알림이 없습니다</div>';
+  document.getElementById('ncc').innerHTML=h;
+  var n=ALERTS.filter(function(c){return c.status!=='confirmed';}).length;
+  var b=document.getElementById('pbd');if(b)b.textContent=n;
+}
+function toggleSp(id){var el=document.getElementById('sp-'+id);if(el)el.classList.toggle('open');}
+function closeSp(id){var el=document.getElementById('sp-'+id);if(el)el.classList.remove('open');}
+function applyS(id,lbl){var c=ALERTS.find(function(x){return x.id===id;});if(c){c.status='snoozed';c.sl=lbl;}rnc();}
+function applyCustomS(id){
+  var ni=document.getElementById('sni-'+id),ns=document.getElementById('sns-'+id);
+  if(!ni||!ns)return;
+  var n=parseInt(ni.value)||1,u=ns.value;
+  var lbl=n+u;
+  applyS(id,lbl);
+}
+function undoConf(id){var c=ALERTS.find(function(x){return x.id===id;});if(c){c.status='pending';}rnc();}
+function doConf(id){var c=ALERTS.find(function(x){return x.id===id;});if(c){c.status='confirmed';c.ca='오늘 오전 9:'+String(new Date().getMinutes()).padStart(2,'0');}rnc();}
+
+// ─── Phone 4: Full History ───────────────
+function showHistoryPhone(){
+  document.getElementById('phone4').scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+}
+function fth(el,t){
+  document.querySelectorAll('#phone4 .ftab').forEach(function(x){x.classList.remove('active');});
+  el.classList.add('active');
+  document.querySelectorAll('#tl4 .ti').forEach(function(i){
+    i.style.display=(t==='all'||i.dataset.htype===t)?'flex':'none';
+  });
+}
+
+// ─── Phone 3: Edit ───────────────────────
+var EMOJIS=['🎵','📺','☁️','💼','🎮','📰','❤️','🎨','📚','🏋️','🎧','🎬','📷','🛒','✈️','🌐','🔐','📱'];
+var COLORS=[
+  {g:'linear-gradient(135deg,#1a1a6e,#4a3aff)',sel:true},
+  {g:'linear-gradient(135deg,#0d4f3c,#1d9e75)'},
+  {g:'linear-gradient(135deg,#6b0f1a,#d85a30)'},
+  {g:'linear-gradient(135deg,#1a003d,#7c3aed)'},
+  {g:'linear-gradient(135deg,#0a2540,#185fa5)'},
+  {g:'linear-gradient(135deg,#2c2c2c,#5f5e5a)'},
+];
+var curEmoji='🎵', curColor=COLORS[0].g;
+
+function openIconMenu(){
+  var ov=document.getElementById('iconPopupOv');
+  var cg=document.getElementById('colorGrid');
+  document.getElementById('emojiPreview').textContent=curEmoji;
+  document.getElementById('emojiTextInput').value=curEmoji;
+  cg.innerHTML=COLORS.map(function(c){
+    return '<div class="cg-dot'+(c.g===curColor?' sel':'')+'" style="background:'+c.g+'" onclick="selectColorFromMenu(this,\''+c.g.replace(/'/g,'"')+'\')"></div>';
+  }).join('');
+  ov.classList.add('show');
+  setTimeout(function(){document.getElementById('emojiTextInput').focus();},100);
+}
+function onEmojiInput(inp){
+  var v=inp.value.trim();
+  if(v) document.getElementById('emojiPreview').textContent=v;
+}
+function applyIcon(){
+  var v=document.getElementById('emojiTextInput').value.trim();
+  if(v){curEmoji=v;document.getElementById('editIcon').textContent=v;}
+  document.getElementById('iconPopupOv').classList.remove('show');
+}
+function selectColorFromMenu(el,g){
+  curColor=g;
+  document.querySelectorAll('.cg-dot').forEach(function(d){d.classList.remove('sel');});
+  el.classList.add('sel');
+  document.querySelector('.eic').style.background=g;
+  document.querySelector('.eic').style.boxShadow='0 4px 20px rgba(0,0,0,0.4)';
+}
+function cancelEdit(){alert('변경사항이 취소되었습니다.');}
+function saveEdit(){
+  var name=document.getElementById('enameInput').value||'Spotify Premium';
+  alert('"'+name+'" 수정완료되었습니다.');
+}
+function onCycleChange(){
+  var v=document.getElementById('cycleSelect').value;
+  var block=document.getElementById('customCycleBlock');
+  if(v==='custom'){block.style.maxHeight='200px';}
+  else{block.style.maxHeight='0';}
+  updateCyclePreview();
+}
+function updateCyclePreview(){
+  var n=parseInt(document.getElementById('cycleNum').value)||1;
+  var u=document.getElementById('cycleUnit').value;
+  var ul=u==='day'?'일':u==='week'?'주':'개월';
+  document.getElementById('cyclePreview').textContent=n+ul+'마다 · 다음 결제일 기준 반복';
+}
+function selType(el){
+  document.querySelectorAll('.etype-btn').forEach(function(x){x.classList.remove('active');});
+  el.classList.add('active');
+  var pf=document.getElementById('promoForm');
+  var isPromo=el.textContent.trim().startsWith('프로모션');
+  if(pf) isPromo?pf.classList.add('open'):pf.classList.remove('open');
+}
+function onPromoTypeChange(){
+  var t=document.getElementById('promoDiscountType').value;
+  document.getElementById('promoAmountRow').style.display=t==='percent'?'none':'flex';
+  document.getElementById('promoPercentRow').style.display=t==='percent'?'flex':'none';
+}
+function selStatus(el,mode){
+  document.querySelectorAll('.estatus-btn').forEach(function(x){x.classList.remove('active-green','active-gray','active-red');});
+  el.classList.add('active-'+mode);
+}
+function selectColor(el){
+  document.querySelectorAll('.ecolor').forEach(function(x){x.classList.remove('selected');});
+  el.classList.add('selected');
+}
+
+// ─── Phone 0: Home ───────────────────────
+var SUBS=[
+  {id:'s1',icon:'🎵',bg:'linear-gradient(135deg,#1a1a6e,#4a3aff)',name:'Spotify Premium',amtRaw:13900,amt:'₩13,900',cycle:'월',days:18,date:'4월 12일',type:'유료',status:'active',typeColor:'rgba(78,207,168,0.15)',typeText:'#4ecfa8',typeBorder:'rgba(78,207,168,0.25)'},
+  {id:'s2',icon:'📺',bg:'linear-gradient(135deg,#6b0000,#e50914)',name:'Netflix',amtRaw:17000,amt:'₩17,000',cycle:'월',days:3,date:'3월 28일',type:'유료',status:'active',typeColor:'rgba(78,207,168,0.15)',typeText:'#4ecfa8',typeBorder:'rgba(78,207,168,0.25)'},
+  {id:'s3',icon:'🍎',bg:'linear-gradient(135deg,#1c1c1e,#555)',name:'Apple One',amtRaw:9900,amt:'₩9,900',cycle:'월',days:8,date:'4월 2일',type:'유료',status:'active',typeColor:'rgba(78,207,168,0.15)',typeText:'#4ecfa8',typeBorder:'rgba(78,207,168,0.25)'},
+  {id:'s4',icon:'🎨',bg:'linear-gradient(135deg,#6b0f1a,#d85a30)',name:'Adobe Creative',amtRaw:26900,amt:'₩26,900',cycle:'월',days:6,date:'4월 1일',type:'프로모션',status:'active',typeColor:'rgba(232,121,160,0.12)',typeText:'#e879a0',typeBorder:'rgba(232,121,160,0.25)'},
+  {id:'s5',icon:'☁️',bg:'linear-gradient(135deg,#0a2540,#185fa5)',name:'iCloud 200GB',amtRaw:1400,amt:'₩1,400',cycle:'월',days:22,date:'4월 17일',type:'유료',status:'active',typeColor:'rgba(78,207,168,0.15)',typeText:'#4ecfa8',typeBorder:'rgba(78,207,168,0.25)'},
+  {id:'s6',icon:'💼',bg:'linear-gradient(135deg,#0d4f3c,#1d9e75)',name:'Notion Pro',amtRaw:10000,amt:'₩10,000',cycle:'월',days:31,date:'4월 25일',type:'유료',status:'paused',typeColor:'rgba(255,255,255,0.07)',typeText:'rgba(255,255,255,0.35)',typeBorder:'rgba(255,255,255,0.1)'},
+];
+var hSort='date', hDragId=null, hSubsOrder=SUBS.filter(function(s){return s.status==='active';}).map(function(s){return s.id;});
+
+function toggleSortMenu(){document.getElementById('sortMenu').classList.toggle('show');}
+
+function setSort(mode){
+  hSort=mode;
+  document.getElementById('sortMenu').classList.remove('show');
+  var lblMap={date:'결제 예정일순',name:'이름순',amount:'금액순'};
+  document.getElementById('sortLabel').textContent=lblMap[mode]||'정렬';
+  ['date','name','amount'].forEach(function(k){
+    var el=document.getElementById('so-'+k),ck=document.getElementById('ck-'+k);
+    if(el)el.classList.toggle('active',k===mode);
+    if(ck)ck.style.display=k===mode?'inline':'none';
+  });
+  var active=SUBS.filter(function(s){return s.status==='active';});
+  if(mode==='date') active.sort(function(a,b){return a.days-b.days;});
+  else if(mode==='name') active.sort(function(a,b){return a.name.localeCompare(b.name);});
+  else if(mode==='amount') active.sort(function(a,b){return b.amtRaw-a.amtRaw;});
+  hSubsOrder=active.map(function(s){return s.id;});
+  renderHome();
+}
+
+// ─── Overlay pages ────────────────────────
+function openArchivePage(){
+  var el=document.getElementById('archivePageOv');
+  el.style.display='flex'; setTimeout(function(){el.style.transform='translateX(0)';},10);
+}
+function closeArchivePage(){
+  var el=document.getElementById('archivePageOv');
+  el.style.transform='translateX(100%)';
+  setTimeout(function(){el.style.display='none';},300);
+}
+function openSettingsPage(){
+  var el=document.getElementById('settingsPageOv');
+  el.style.display='flex'; setTimeout(function(){el.style.transform='translateX(0)';},10);
+}
+function closeSettingsPage(){
+  var el=document.getElementById('settingsPageOv');
+  el.style.transform='translateX(100%)';
+  setTimeout(function(){el.style.display='none';},300);
+}
+function openPausedPage(){
+  renderPausedPage();
+  var el=document.getElementById('pausedPageOv');
+  el.style.display='flex'; setTimeout(function(){el.style.transform='translateX(0)';},10);
+}
+function closePausedPage(){
+  var el=document.getElementById('pausedPageOv');
+  el.style.transform='translateX(100%)';
+  setTimeout(function(){el.style.display='none';},300);
+}
+function renderPausedPage(){
+  var paused=SUBS.filter(function(s){return s.status==='paused';});
+  var el=document.getElementById('pausedPageList');
+  if(!el) return;
+  el.innerHTML=paused.map(function(s){
+    var dl=daysLabel(s.days);
+    return '<div style="background:rgba(255,255,255,0.04);border:0.5px solid rgba(255,255,255,0.08);border-radius:16px;padding:14px;margin-bottom:10px;opacity:0.7;">'
+      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">'
+      +'<div style="width:40px;height:40px;border-radius:12px;background:'+s.bg+';display:flex;align-items:center;justify-content:center;font-size:20px;">'+s.icon+'</div>'
+      +'<div style="flex:1;"><div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.65);">'+s.name+'</div>'
+      +'<span style="font-size:10px;background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.35);border-radius:6px;padding:1px 6px;">일시정지</span></div>'
+      +'<div style="font-size:16px;font-weight:700;color:rgba(255,255,255,0.5);">'+s.amt+'</div></div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;">'
+      +'<span style="font-size:11px;color:rgba(255,255,255,0.3);">다음 결제 예정 · '+s.date+'</span>'
+      +'<button style="font-size:12px;color:#4ecfa8;background:rgba(78,207,168,0.1);border:0.5px solid rgba(78,207,168,0.25);border-radius:9px;padding:5px 12px;cursor:pointer;">활성화</button>'
+      +'</div></div>';
+  }).join('');
+}
+
+function daysLabel(d){
+  if(d===0) return {text:'오늘',cls:'urgent'};
+  if(d===1) return {text:'내일',cls:'urgent'};
+  if(d<=7)  return {text:'D-'+d,cls:'soon'};
+  return {text:'D-'+d,cls:'normal'};
+}
+
+function makeCard(s,isDraggable){
+  var dl=daysLabel(s.days);
+  return '<div class="sub-card'+(isDraggable?'':' paused-card')+'" id="sc-'+s.id+'"'
+    +(isDraggable?' draggable="true" ondragstart="onDragStart(event,\''+s.id+'\')" ondragover="onDragOver(event,\''+s.id+'\')" ondragleave="onDragLeave(event,\''+s.id+'\')" ondrop="onDrop(event,\''+s.id+'\')"':'')+'>'
+    +'<div class="sc-top">'
+    +'<div class="sc-icon" style="background:'+s.bg+'">'+s.icon+'</div>'
+    +'<div class="sc-info"><div class="sc-name">'+s.name+'</div>'
+    +'<span class="sc-type" style="background:'+s.typeColor+';color:'+s.typeText+';border:0.5px solid '+s.typeBorder+';">'+s.type+'</span></div>'
+    +'<div class="sc-amount">'+s.amt+'<div style="font-size:10px;color:rgba(255,255,255,0.3);font-weight:400;text-align:right;">/'+s.cycle+'</div></div>'
+    +'</div>'
+    +'<div class="sc-bottom"><span class="sc-date">다음 결제 · '+s.date+'</span>'
+    +'<span class="sc-days '+dl.cls+'">'+dl.text+'</span></div></div>';
+}
+
+function renderHome(){
+  var listEl=document.getElementById('subsList');
+  if(!listEl) return;
+  var active=hSubsOrder.map(function(id){return SUBS.find(function(s){return s.id===id;});}).filter(Boolean);
+  listEl.innerHTML=active.map(function(s){return makeCard(s,true);}).join('');
+}
+
+function onDragStart(e,id){hDragId=id;setTimeout(function(){var el=document.getElementById('sc-'+id);if(el)el.classList.add('dragging');},0);}
+function onDragOver(e,id){e.preventDefault();if(id===hDragId)return;var el=document.getElementById('sc-'+id);if(el)el.classList.add('drag-over');}
+function onDragLeave(e,id){var el=document.getElementById('sc-'+id);if(el)el.classList.remove('drag-over');}
+function onDrop(e,targetId){
+  e.preventDefault();
+  var el=document.getElementById('sc-'+targetId);if(el)el.classList.remove('drag-over');
+  if(!hDragId||hDragId===targetId)return;
+  var fi=hSubsOrder.indexOf(hDragId),ti=hSubsOrder.indexOf(targetId);
+  if(fi<0||ti<0)return;
+  hSubsOrder.splice(fi,1);hSubsOrder.splice(ti,0,hDragId);
+  var dragEl=document.getElementById('sc-'+hDragId);if(dragEl)dragEl.classList.remove('dragging');
+  hDragId=null; hSort='manual'; document.getElementById('sortLabel').textContent='직접 정렬';
+  renderHome();
+}
+document.addEventListener('dragend',function(){
+  if(hDragId){var el=document.getElementById('sc-'+hDragId);if(el)el.classList.remove('dragging');}
+  document.querySelectorAll('.sub-card').forEach(function(c){c.classList.remove('drag-over');});
+  hDragId=null;
+});
+
+// ─── Phone 4: Edit Sheet ─────────────────
+function openEditSheet(name,amt,date,type){
+  document.getElementById('esTitle').textContent=name;
+  document.getElementById('esTypeTag').textContent=type;
+  document.getElementById('esName').value=name;
+  document.getElementById('esAmt').value=amt;
+  document.getElementById('esDate').value=date;
+  document.getElementById('esType').value=type;
+  document.getElementById('editSheetOv').classList.add('show');
+  document.getElementById('editSheet').classList.add('show');
+}
+function closeEditSheet(){
+  document.getElementById('editSheetOv').classList.remove('show');
+  document.getElementById('editSheet').classList.remove('show');
+}
+function saveEditSheet(){
+  var name=document.getElementById('esName').value;
+  alert('"'+name+'" 수정 완료');
+  closeEditSheet();
+}
+function showHistoryPhone(){
+  document.getElementById('phone4').scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+}
+function fth(el,t){
+  document.querySelectorAll('#phone4 .ftab').forEach(function(x){x.classList.remove('active');});
+  el.classList.add('active');
+  document.querySelectorAll('#tl4 .ti').forEach(function(i){
+    i.style.display=(t==='all'||i.dataset.htype===t)?'flex':'none';
+  });
+}
+
+// ─── Swipe Navigation ─────────────────────
+var curTab=1;
+var swipeStartX=0, swipeStartY=0, swiping=false;
+function goTab(idx){
+  curTab=idx;
+  document.getElementById('swipeTrack').style.transform='translateX(-'+idx*33.333+'%)';
+  [0,1,2].forEach(function(i){
+    var el=document.getElementById('tb-'+i);
+    if(el){el.classList.toggle('tb-active',i===idx);}
+    var sv=el?el.querySelector('svg path,svg rect,svg circle'):null;
+  });
+  var ind=document.getElementById('tabIndicator');
+  if(ind) ind.style.left=(idx*33.333)+'%';
+  var fab=document.getElementById('homeFab');
+  if(fab) fab.style.display=idx===1?'flex':'none';
+}
+// touch swipe
+(function(){
+  var outer=document.getElementById('swipeOuter');
+  if(!outer) return;
+  outer.addEventListener('touchstart',function(e){swipeStartX=e.touches[0].clientX;swipeStartY=e.touches[0].clientY;swiping=true;},{passive:true});
+  outer.addEventListener('touchend',function(e){
+    if(!swiping) return; swiping=false;
+    var dx=e.changedTouches[0].clientX-swipeStartX;
+    var dy=e.changedTouches[0].clientY-swipeStartY;
+    if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>40){
+      if(dx<0&&curTab<2) goTab(curTab+1);
+      else if(dx>0&&curTab>0) goTab(curTab-1);
+    }
+  },{passive:true});
+  outer.addEventListener('mousedown',function(e){swipeStartX=e.clientX;swipeStartY=e.clientY;swiping=true;});
+  outer.addEventListener('mouseup',function(e){
+    if(!swiping) return; swiping=false;
+    var dx=e.clientX-swipeStartX;
+    var dy=e.clientY-swipeStartY;
+    if(Math.abs(dx)>Math.abs(dy)&&Math.abs(dx)>40){
+      if(dx<0&&curTab<2) goTab(curTab+1);
+      else if(dx>0&&curTab>0) goTab(curTab-1);
+    }
+  });
+})();
+function setPeriod(btn,p){
+  document.querySelectorAll('.sp-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+}
+// ─── Settings: Account sheet ──────────────
+function openAcctSheet(){
+  document.getElementById('acctSheetOv').classList.add('show');
+  document.getElementById('acctSheet').classList.add('show');
+}
+function closeAcctSheet(){
+  document.getElementById('acctSheetOv').classList.remove('show');
+  document.getElementById('acctSheet').classList.remove('show');
+}
+// ─── Settings: Global notif toggle ───────
+var DEFAULT_NOTIF={id:'sn-default',label:'결제 하루 전',sub:'오전 9:00'};
+var setCustomNotifList=[{id:'sn-default',label:'결제 하루 전',sub:'오전 9:00'}];
+var setNId=101;
+function toggleGlobalNotif(btn){
+  btn.classList.toggle('off');
+  var on=!btn.classList.contains('off');
+  document.getElementById('setNotifExpand').classList.toggle('open',on);
+  if(on && setCustomNotifList.length===0){
+    setCustomNotifList=[Object.assign({},DEFAULT_NOTIF)];
+  }
+  renderSetCustomNotifs();
+}
+function openSetNotifSheet(){
+  var presets=['당일에','하루 일찍','2일 전','3일 전','일주일 일찍'];
+  var label=prompt('알림 시점을 입력하세요\n(예: 3일 전, 일주일 전)\n\n프리셋: '+presets.join(', '));
+  if(!label||!label.trim()) return;
+  setCustomNotifList.push({id:'sn'+(setNId++),label:label.trim(),sub:'오전 9:00'});
+  renderSetCustomNotifs();
+}
+function removeSetNotif(id){
+  var remaining=setCustomNotifList.filter(function(x){return x.id!==id;});
+  if(remaining.length===0){
+    // 마지막 항목 삭제 시 기본 항목 자동 복원
+    setCustomNotifList=[Object.assign({},DEFAULT_NOTIF)];
+  } else {
+    setCustomNotifList=remaining;
+  }
+  renderSetCustomNotifs();
+}
+function renderSetCustomNotifs(){
+  var el=document.getElementById('setCustomNotifs');
+  if(!el) return;
+  el.innerHTML=setCustomNotifList.map(function(n){
+    return '<div class="set-notif-item">'
+      +'<div style="display:flex;align-items:center;gap:8px;">'
+      +'<div class="set-notif-icon-box">🔔</div>'
+      +'<div><div class="set-notif-lbl">'+n.label+'</div>'
+      +(n.sub?'<div class="set-notif-sub">'+n.sub+'</div>':'')
+      +'</div></div>'
+      +'<button class="set-notif-del" onclick="removeSetNotif(\''+n.id+'\')">×</button>'
+      +'</div>';
+  }).join('');
+}
+
+// ─── Settings: Widget preview toggle ─────
+function toggleWp(btn,field){
+  btn.classList.toggle('on');
+  var on=btn.classList.contains('on');
+  var el=document.getElementById('wp-'+field);
+  if(el) el.style.display=on?'':'none';
+}
+
+// ─── Init ─────────────────────────────────
+rnc();rp1();up1();
+(function(){
+  var active=SUBS.filter(function(s){return s.status==='active';});
+  active.sort(function(a,b){return a.days-b.days;});
+  hSubsOrder=active.map(function(s){return s.id;});
+  renderHome();
+})();
+renderSetCustomNotifs();
+initTl1Tabs();
+setTimeout(function(){goTab(1);},0);
+</script>
+</body>
+</html>
