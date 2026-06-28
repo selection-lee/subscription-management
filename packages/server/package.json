@@ -11,17 +11,24 @@
     }
   },
   "scripts": {
+    "dev": "tsx watch --conditions=development --env-file=../../.env src/main.ts",
+    "start": "node --env-file=../../.env dist/main.js",
     "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
     "@lib/schema": "workspace:*",
     "@lib/shared": "workspace:*",
+    "@prisma/client": "catalog:",
     "@trpc/server": "catalog:",
+    "express": "catalog:",
     "superjson": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
     "typescript": "catalog:"
   }
 }

@@ -1,3 +1,8 @@
+import path from "node:path";
+import dotenvx from "@dotenvx/dotenvx";
+// 실행 방식(node --watch / start)과 무관하게 모노레포 루트 .env 로드
+dotenvx.config({ path: path.resolve(import.meta.dirname, "../../../.env"), quiet: true });
+
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
