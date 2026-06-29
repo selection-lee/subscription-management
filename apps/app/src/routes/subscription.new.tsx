@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "../trpc.ts";
-import { toDateInputValue } from "../lib/subscription.ts";
+import { toDateInputValue, addCycle } from "../lib/subscription.ts";
 import { SubscriptionForm } from "../components/SubscriptionForm.tsx";
 
 export const Route = createFileRoute("/subscription/new")({
@@ -38,7 +38,7 @@ function NewPage() {
         cycleUnit: "MONTH",
         cycleInterval: 1,
         startDate: today,
-        nextPaymentDate: today,
+        nextPaymentDate: addCycle(today, "MONTH", 1),
         paymentMethod: "",
         memo: "",
       }}

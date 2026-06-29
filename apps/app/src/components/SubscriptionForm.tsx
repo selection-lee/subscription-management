@@ -7,6 +7,7 @@ import {
   cycleUnits,
   gradients,
   gradientFromHex,
+  addCycle,
 } from "../lib/subscription.ts";
 import { EmojiPicker } from "./EmojiPicker.tsx";
 
@@ -210,7 +211,14 @@ export function SubscriptionForm({
             <Row label="결제 주기">
               <SelectBox
                 value={form.cycleUnit}
-                onChange={(v) => setForm({ ...form, cycleUnit: v as CycleUnit })}
+                onChange={(v) =>
+                  setForm({
+                    ...form,
+                    cycleUnit: v as CycleUnit,
+                    // 주기 변경 시 다음 결제일 재계산
+                    nextPaymentDate: addCycle(form.startDate, v, form.cycleInterval),
+                  })
+                }
                 options={cycleUnits.map((u) => ({
                   value: u,
                   label: u === "WEEK" ? "매주" : u === "MONTH" ? "매월" : "매년",
@@ -222,7 +230,14 @@ export function SubscriptionForm({
                 type="date"
                 className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm outline-none [color-scheme:dark] focus:border-[#4a3aff]"
                 value={form.startDate}
-                onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    startDate: e.target.value,
+                    // 시작일 변경 시 다음 결제일 재계산 (수동 입력값도 덮어씀)
+                    nextPaymentDate: addCycle(e.target.value, form.cycleUnit, form.cycleInterval),
+                  })
+                }
               />
             </Row>
             <Row label="다음 결제일">

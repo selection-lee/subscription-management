@@ -58,6 +58,18 @@ export function toDateInputValue(value: Date | string) {
   return new Date(value).toISOString().slice(0, 10);
 }
 
+// 다음 결제일 = 시작일 + (간격 × 단위). UTC 기준으로 계산해 타임존 드리프트 방지.
+// 월말 케이스(1/31 + 1개월)는 JS 기본 오버플로 동작(→ 3/3) — 요구사항 §8-3, 추후 보정.
+export function addCycle(dateStr: string, unit: string, interval: number) {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  const n = interval || 1;
+  if (unit === "WEEK") d.setUTCDate(d.getUTCDate() + 7 * n);
+  else if (unit === "YEAR") d.setUTCFullYear(d.getUTCFullYear() + n);
+  else d.setUTCMonth(d.getUTCMonth() + n);
+  return d.toISOString().slice(0, 10);
+}
+
 function startOfDay(date: Date) {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
